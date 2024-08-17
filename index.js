@@ -79,7 +79,7 @@ const deleteNotificationRoutes = require('./routes/generics/deleteNotificationRo
 
 
 // Use Routes
-app.use('/api/test', test);
+app.use('/api', test);
 
 app.use('/api/auth/login', loginRoutes);
 app.use('/api/auth/updateLoginCredentials', updateLoginCredentialsRoures);
