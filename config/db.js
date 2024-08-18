@@ -12,8 +12,6 @@ const db = mysql.createConnection({
   multipleStatements: true, 
 });
 
-
-
 db.connect(err => {
   if (err) {
     console.error('MySQL connection failed:', err.stack);
@@ -62,8 +60,26 @@ db.connect(err => {
           return;
         }
 
-        // Check and create root admin
-        checkAndCreateRootAdmin();
+        // Check if the database has at least one table
+        const checkTablesQuery = `SHOW TABLES;`;
+        db.query(checkTablesQuery, (err, tables) => {
+          if (err) {
+            console.error('Error checking for tables:', err.stack);
+            return;
+          }
+
+          if (tables.length === 0) {
+            console.log('No tables found in the database, initializing database...');
+            
+            // Initialize tables
+            initializeDatabase();
+          } else {
+            console.log('Database has tables, skipping table and initial data creation.');
+
+            // Check and create root admin
+            checkAndCreateRootAdmin();
+          }
+        });
       });
     }
   });
@@ -247,52 +263,35 @@ function insertInitialData() {
 }
 
 async function checkAndCreateRootAdmin() {
-  // Check and create root admin
-  const checkUserQuery = `SELECT * FROM users WHERE user_type = 'root_admin' LIMIT 1;`;
+  const rootUsername = process.env.ROOT_ADMIN_USERNAME;
+  const rootPassword = process.env.ROOT_ADMIN_PASSWORD;
+  const rootFullname = process.env.ROOT_ADMIN_FULLNAME;
 
-  db.query(checkUserQuery, async (err, results) => {
+  const checkRootAdminQuery = `SELECT user_id FROM users WHERE user_type='root' LIMIT 1;`;
+  db.query(checkRootAdminQuery, async (err, results) => {
     if (err) {
-      console.error('Error checking for root_admin user:', err.stack);
+      console.error('Error checking for root admin:', err.stack);
       return;
     }
 
     if (results.length === 0) {
-      console.log('No root_admin user found, creating default root_admin user.');
+      console.log('Root admin not found, creating root admin...');
 
-      try {
-        const userId = process.env.ROOT_ADMIN_ID;
-        const password = process.env.ROOT_ADMIN_PASSWORD;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const userType = 'root_admin';
-        const fullName = process.env.ROOT_ADMIN_FULLNAME;
-        const genderId = parseInt(process.env.ROOT_ADMIN_GENDER_ID, 10);
-        const nationalId = process.env.ROOT_ADMIN_NATIONAL_ID;
-        const phone = process.env.ROOT_ADMIN_PHONE;
-        const email = process.env.ROOT_ADMIN_EMAIL;
-        const isBlocked = false;
-        const dp = null;
+      const hashedPassword = await bcrypt.hash(rootPassword, 10);
 
-        const insertUserQuery = `
-          INSERT INTO users (user_id, password, user_type, fullname, gender_id, national_id, phone, email, is_blocked, dp)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `;
-
-        db.query(
-          insertUserQuery,
-          [userId, hashedPassword, userType, fullName, genderId, nationalId, phone, email, isBlocked, dp],
-          err => {
-            if (err) {
-              console.error('Error creating root_admin user:', err.stack);
-              return;
-            }
-            console.log('Default root_admin user created successfully.');
-          }
-        );
-      } catch (hashError) {
-        console.error('Error hashing password:', hashError.stack);
-      }
+      const createRootAdminQuery = `
+        INSERT INTO users (user_id, password, user_type, fullname)
+        VALUES (UUID(), '${hashedPassword}', 'root', '${rootFullname}');
+      `;
+      db.query(createRootAdminQuery, (err) => {
+        if (err) {
+          console.error('Error creating root admin:', err.stack);
+          return;
+        }
+        console.log('Root admin created successfully.');
+      });
     } else {
-      console.log('Root admin user already exists.');
+      console.log('Root admin already exists, skipping creation.');
     }
   });
 }
