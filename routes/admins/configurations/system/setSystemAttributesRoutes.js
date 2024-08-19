@@ -23,7 +23,7 @@ router.post('/', checkAdmin, upload.single('logo'), (req, res) => {
     const logoImgName = req.file ? req.file.filename : null;
 
     // Query to check if a record exists
-    const selectQuery = `SELECT * FROM system LIMIT 1`;
+    const selectQuery = `SELECT * FROM system_info LIMIT 1`;
 
     db.query(selectQuery, (err, result) => {
         if (err) {
@@ -34,7 +34,7 @@ router.post('/', checkAdmin, upload.single('logo'), (req, res) => {
         // If no record exists, insert a new one
         if (result.length === 0) {
             const insertQuery = `
-                INSERT INTO system (system_name, slogan, logo_img_name)
+                INSERT INTO system_info (system_name, slogan, logo_img_name)
                 VALUES (?, ?, ?)
             `;
             db.query(insertQuery, [systemName || 'XanderCreditors', slogan || 'More than just a money lender', logoImgName || ''], (err, insertResult) => {
@@ -48,7 +48,7 @@ router.post('/', checkAdmin, upload.single('logo'), (req, res) => {
             // If a record exists, update it
             const { id } = result[0];
             const updateQuery = `
-                UPDATE system
+                UPDATE system_info
                 SET system_name = ?, slogan = ?, logo_img_name = ?
                 WHERE id = ?
             `;

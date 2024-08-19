@@ -5,7 +5,7 @@ const checkSession = require('../../../../auth/checkSession');
 
 // Route to get system attributes
 router.get('/', checkSession, (req, res) => {
-    const query = `SELECT system_name, slogan, logo_img_name FROM system LIMIT 1`;
+    const query = `SELECT system_name, slogan, logo_img_name FROM system_info LIMIT 1`;
 
     db.query(query, (err, result) => {
         if (err) {
