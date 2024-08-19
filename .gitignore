@@ -1,3 +1,8 @@
+# Ignore the .env file
 .env
-/venv
-*.venv
+
+# Ignore virtual environment directories
+venv/
+.venv/
+
+# Add any other files or directories you want to ignore here
