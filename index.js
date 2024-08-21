@@ -74,7 +74,7 @@ const getAdminLoanStatsRoutes = require('./routes/admins/dashboard/getAdminLoanS
 const getUserTypeRoutes = require('./routes/generics/getUserTypeRoutes.js');
 const getUserNotificationsRoutes = require('./routes/generics/getUserNotificationsRoutes.js');
 const deleteNotificationRoutes = require('./routes/generics/deleteNotificationRoutes.js');
-
+const deleteNotificationsRoutes = require('./routes/generics/deleteNotificationsRoutes.js');
 
 
 
@@ -129,6 +129,7 @@ app.use('/api/getAdminLoanStats', getAdminLoanStatsRoutes);
 app.use('/api/getUserType', getUserTypeRoutes);
 app.use('/api/getUserNotifications', getUserNotificationsRoutes);
 app.use('/api/deleteNotification', deleteNotificationRoutes);
+app.use('/api/deleteNotifications', deleteNotificationsRoutes);
 
 
 

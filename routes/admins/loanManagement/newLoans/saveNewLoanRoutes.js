@@ -186,7 +186,7 @@ function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, 
 
       // Send SMS to customer and root admin
       const customerSMS = `Dear ${fullname}, your loan has been ${action}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`;
-      const rootAdminSMS = `Loan ${action} for ${fullname} (User ID: ${customerId}). Amount: ${formatCurrency(loanAmount)}. Operation handled by ${handlerFullname}.`;
+      const rootAdminSMS = `Loan ${action} for ${fullname} identified as: ${customerId}. Amount: ${formatCurrency(loanAmount)}. Operation handled by ${handlerFullname}.`;
 
       Promise.all([
         sendSMS(`+${customerPhone}`, customerSMS)
