@@ -2,6 +2,9 @@ const db = require('../../../../config/db');
 const { sendSMS } = require('../../../../config/twilioService');
 const moment = require('moment');
 
+// Function to introduce a delay
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 const sendLoanReminders = async () => {
   try {
     // Get the current date and time
@@ -46,6 +49,9 @@ const sendLoanReminders = async () => {
           await createNotification('reminder', loan.customer_id, content);
         }
 
+        // Add delay before sending the next SMS
+        await delay(5000); // 5-second delay
+
         if (adminMessage) {
           const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;
           await sendSMS(`+${admin.phone}`, content);
@@ -65,6 +71,9 @@ const sendLoanReminders = async () => {
           await createNotification('alert', loan.customer_id, content);
         }
 
+        // Add delay before sending the next SMS
+        await delay(10000); // 5-second delay
+
         if (adminMessage) {
           const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;
           await sendSMS(`+${admin.phone}`, content);
@@ -81,6 +90,9 @@ const sendLoanReminders = async () => {
           await sendSMS(`+${customer.phone}`, content);
           await createNotification('alert', loan.customer_id, content);
         }
+
+        // Add delay before sending the next SMS
+        await delay(5000); // 5-second delay
 
         if (adminMessage) {
           const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;

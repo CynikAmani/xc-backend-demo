@@ -132,6 +132,7 @@ router.post('/', checkAdmin, (req, res) => {
   });
 });
 
+
 // Helper function to handle notifications and SMS sending
 function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, res, req, loanAmount, handlerFullname) {
   const handlerId = req.session.userId;
@@ -184,27 +185,31 @@ function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, 
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      // Send SMS to customer and root admin
+      // Send SMS to customer and root admin with delay
       const customerSMS = `Dear ${fullname}, your loan has been ${action}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`;
       const rootAdminSMS = `Loan ${action} for ${fullname} identified as: ${customerId}. Amount: ${formatCurrency(loanAmount)}. Operation handled by ${handlerFullname}.`;
 
-      Promise.all([
-        sendSMS(`+${customerPhone}`, customerSMS)
-          .catch(err => console.error('Failed to send SMS to customer:', err)),
-        rootAdminPhone ? sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
-          .catch(err => console.error('Failed to send SMS to root admin:', err))
-          : Promise.resolve()
-      ])
-      .then(() => {
-        res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
-      })
-      .catch(err => {
-        console.error('Error sending SMS:', err);
-        // Respond with a success status but log the error internally
-        res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
-      });
+      sendSMS(`+${customerPhone}`, customerSMS)
+        .then(() => {
+          // Delay sending the SMS to the root admin by 2 seconds
+          if (rootAdminPhone) {
+            setTimeout(() => {
+              sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
+                .catch(err => console.error('Failed to send SMS to root admin:', err));
+            }, 10000);
+          }
+        })
+        .then(() => {
+          res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
+        })
+        .catch(err => {
+          console.error('Error sending SMS:', err);
+          // Respond with a success status but log the error internally
+          res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
+        });
     });
   });
 }
+
 
 module.exports = router;

@@ -142,7 +142,7 @@ function handleNotificationsAndSMS(customerId, loanAmount, collateral, handlerId
           {
             notification_type: 'info',
             target_user: customerId,
-            content: `Congraturations ${fullname}, your loan application has been approved. Your loan ID is ${newLoanId}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`,
+            content: `Congratulations ${fullname}, your loan application has been approved. Your loan ID is ${newLoanId}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`,
             date: notificationDate
           },
           {
@@ -172,25 +172,42 @@ function handleNotificationsAndSMS(customerId, loanAmount, collateral, handlerId
             return res.status(500).json({ message: 'Internal server error' });
           }
 
-          // Send SMS to customer and root admin
-          const customerSMS = `Congraturations ${fullname}, your loan application has been approved. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}. Thank you.`;
-          const rootAdminSMS = `Loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`;
+          // Send SMS to customer and root admin with a delay
+          const sendCustomerSMS = () => {
+            const customerSMS = `Congratulations ${fullname}, your loan application has been approved. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}. Thank you.`;
+            return sendSMS(`+${customerPhone}`, customerSMS)
+              .catch(err => console.error('Failed to send SMS to customer:', err));
+          };
 
-          Promise.all([
-            sendSMS(`+${customerPhone}`, customerSMS)
-              .catch(err => console.error('Failed to send SMS to customer:', err)),
-            rootAdminPhone ? sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
-              .catch(err => console.error('Failed to send SMS to root admin:', err))
-              : Promise.resolve()
-          ])
-          .then(() => {
-            res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
-          })
-          .catch(err => {
-            console.error('Error sending SMS:', err);
-            // Respond with a success status but log the error internally
-            res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
-          });
+          const sendAdminSMS = () => {
+            if (rootAdminPhone) {
+              const rootAdminSMS = `Loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`;
+              return sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
+                .catch(err => console.error('Failed to send SMS to root admin:', err));
+            }
+            return Promise.resolve();
+          };
+
+          sendCustomerSMS()
+            .then(() => {
+              // Add a delay of 2 seconds before sending the next SMS
+              setTimeout(() => {
+                sendAdminSMS()
+                  .then(() => {
+                    res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
+                  })
+                  .catch(err => {
+                    console.error('Error sending SMS to root admin:', err);
+                    // Respond with a success status but log the error internally
+                    res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
+                  });
+              }, 10000); // 2 seconds delay
+            })
+            .catch(err => {
+              console.error('Error sending SMS to customer:', err);
+              // Respond with a success status but log the error internally
+              res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
+            });
         });
       });
     });
