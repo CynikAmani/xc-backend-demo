@@ -92,7 +92,7 @@ const sendLoanReminders = async () => {
         }
 
         // Add delay before sending the next SMS
-        await delay(5000); // 5-second delay
+        await delay(50000); // 5-second delay
 
         if (adminMessage) {
           const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;

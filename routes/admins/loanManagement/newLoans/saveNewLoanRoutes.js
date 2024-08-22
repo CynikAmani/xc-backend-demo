@@ -133,7 +133,6 @@ router.post('/', checkAdmin, (req, res) => {
 });
 
 
-// Helper function to handle notifications and SMS sending
 function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, res, req, loanAmount, handlerFullname) {
   const handlerId = req.session.userId;
 
@@ -185,31 +184,33 @@ function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, 
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      // Send SMS to customer and root admin with delay
+      // Send SMS to customer immediately
       const customerSMS = `Dear ${fullname}, your loan has been ${action}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`;
-      const rootAdminSMS = `Loan ${action} for ${fullname} identified as: ${customerId}. Amount: ${formatCurrency(loanAmount)}. Operation handled by ${handlerFullname}.`;
-
       sendSMS(`+${customerPhone}`, customerSMS)
         .then(() => {
-          // Delay sending the SMS to the root admin by 2 seconds
-          if (rootAdminPhone) {
-            setTimeout(() => {
-              sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
-                .catch(err => console.error('Failed to send SMS to root admin:', err));
-            }, 10000);
-          }
+          console.log('SMS sent to customer successfully');
         })
-        .then(() => {
-          res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
-        })
-        .catch(err => {
-          console.error('Error sending SMS:', err);
-          // Respond with a success status but log the error internally
-          res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
-        });
+        .catch(err => console.error('Failed to send SMS to customer:', err));
+
+      // Delay sending the SMS to the root admin by 5 minutes (300,000 milliseconds)
+      if (rootAdminPhone) {
+        const rootAdminSMS = `Loan ${action} for ${fullname} identified as: ${customerId}. Amount: ${formatCurrency(loanAmount)}. Operation handled by ${handlerFullname}.`;
+
+        setTimeout(() => {
+          sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
+            .then(() => {
+              console.log('SMS sent to root admin successfully');
+            })
+            .catch(err => console.error('Failed to send SMS to root admin:', err));
+        }, 300000); // 5 minutes delay
+      }
+
+      // Respond to the client immediately
+      res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
     });
   });
 }
+
 
 
 module.exports = router;

@@ -172,13 +172,14 @@ function handleNotificationsAndSMS(customerId, loanAmount, collateral, handlerId
             return res.status(500).json({ message: 'Internal server error' });
           }
 
-          // Send SMS to customer and root admin with a delay
+          // Send SMS to customer immediately
           const sendCustomerSMS = () => {
             const customerSMS = `Congratulations ${fullname}, your loan application has been approved. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}. Thank you.`;
             return sendSMS(`+${customerPhone}`, customerSMS)
               .catch(err => console.error('Failed to send SMS to customer:', err));
           };
 
+          // Send SMS to root admin after a 5-minute delay
           const sendAdminSMS = () => {
             if (rootAdminPhone) {
               const rootAdminSMS = `Loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`;
@@ -188,9 +189,10 @@ function handleNotificationsAndSMS(customerId, loanAmount, collateral, handlerId
             return Promise.resolve();
           };
 
+          // Send the SMS to the customer immediately
           sendCustomerSMS()
             .then(() => {
-              // Add a delay of 2 seconds before sending the next SMS
+              // Add a delay of 5 minutes (300,000 milliseconds) before sending the next SMS
               setTimeout(() => {
                 sendAdminSMS()
                   .then(() => {
@@ -201,7 +203,7 @@ function handleNotificationsAndSMS(customerId, loanAmount, collateral, handlerId
                     // Respond with a success status but log the error internally
                     res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
                   });
-              }, 10000); // 2 seconds delay
+              }, 300000); // 5 minutes delay
             })
             .catch(err => {
               console.error('Error sending SMS to customer:', err);
