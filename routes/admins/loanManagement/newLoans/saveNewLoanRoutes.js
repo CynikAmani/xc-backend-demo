@@ -107,7 +107,12 @@ router.post('/', checkAdmin, (req, res) => {
                 return res.status(500).json({ message: 'Internal server error' });
               }
 
-              handleNotificationsAndSMS(customerId, customerPhone, fullname, 'updated', res, req, loanAmount, handlerFullname);
+              // Respond immediately
+              res.status(200).json({ message: `Loan ${loanId} has been updated successfully.` });
+
+              // Handle notifications and SMS asynchronously
+              handleNotifications(customerId, customerPhone, fullname, 'updated', req, loanAmount, handlerFullname);
+              handleSMS(customerPhone, fullname, 'updated', loanAmount, handlerFullname);
             });
           });
         } else {
@@ -124,7 +129,12 @@ router.post('/', checkAdmin, (req, res) => {
               return res.status(500).json({ message: 'Internal server error' });
             }
 
-            handleNotificationsAndSMS(customerId, customerPhone, fullname, 'Granted', res, req, loanAmount, handlerFullname);
+            // Respond immediately
+            res.status(200).json({ message: `Loan ${newLoanId} has been granted successfully.` });
+
+            // Handle notifications and SMS asynchronously
+            handleNotifications(customerId, customerPhone, fullname, 'granted', req, loanAmount, handlerFullname);
+            // handleSMS(customerPhone, fullname, 'granted', loanAmount, handlerFullname);
           });
         }
       });
@@ -132,8 +142,8 @@ router.post('/', checkAdmin, (req, res) => {
   });
 });
 
-
-function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, res, req, loanAmount, handlerFullname) {
+// Helper function to handle notifications
+function handleNotifications(customerId, customerPhone, fullname, action, req, loanAmount, handlerFullname) {
   const handlerId = req.session.userId;
 
   // Fetch root admin details
@@ -141,7 +151,7 @@ function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, 
   db.query(rootAdminQuery, (err, rootAdminResult) => {
     if (err) {
       console.error('Database query error:', err);
-      return res.status(500).json({ message: 'Internal server error' });
+      return;
     }
 
     const rootAdmin = rootAdminResult[0];
@@ -160,7 +170,7 @@ function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, 
       {
         notification_type: 'info',
         target_user: handlerId,
-        content: `You have ${action} a loan for ${fullname}, identified as ${customerId}. Amount: ${formatCurrency(loanAmount)}`,
+        content: `You have ${action} a loan for ${fullname}. Amount: ${formatCurrency(loanAmount)}`,
         date: notificationDate
       }
     ];
@@ -169,7 +179,7 @@ function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, 
       notifications.push({
         notification_type: 'info',
         target_user: rootAdminId,
-        content: `Loan ${action} for ${fullname}, identified as ${customerId}. Amount: ${formatCurrency(loanAmount)}. Operation handled by ${handlerFullname}.`,
+        content: `A loan for ${fullname} has been ${action} by ${handlerFullname}. Amount: ${formatCurrency(loanAmount)}`,
         date: notificationDate
       });
     }
@@ -180,37 +190,34 @@ function handleNotificationsAndSMS(customerId, customerPhone, fullname, action, 
 
     db.query(insertNotificationQuery, [notificationValues], (err) => {
       if (err) {
-        console.error('Database notification insertion error:', err);
-        return res.status(500).json({ message: 'Internal server error' });
+        console.error('Database insertion error:', err);
       }
-
-      // Send SMS to customer immediately
-      const customerSMS = `Dear ${fullname}, your loan has been ${action}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`;
-      sendSMS(`+${customerPhone}`, customerSMS)
-        .then(() => {
-          console.log('SMS sent to customer successfully');
-        })
-        .catch(err => console.error('Failed to send SMS to customer:', err));
-
-      // Delay sending the SMS to the root admin by 5 minutes (300,000 milliseconds)
-      if (rootAdminPhone) {
-        const rootAdminSMS = `Loan ${action} for ${fullname} identified as: ${customerId}. Amount: ${formatCurrency(loanAmount)}. Operation handled by ${handlerFullname}.`;
-
-        setTimeout(() => {
-          sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
-            .then(() => {
-              console.log('SMS sent to root admin successfully');
-            })
-            .catch(err => console.error('Failed to send SMS to root admin:', err));
-        }, 300000); // 5 minutes delay
-      }
-
-      // Respond to the client immediately
-      res.status(action === 'created' ? 201 : 200).json({ message: `Loan ${action} successfully` });
     });
   });
 }
 
+// Helper function to handle SMS sending
+function handleSMS(customerPhone, fullname, action, loanAmount, handlerFullname) {
+  // Send SMS to customer
+  const customerSMS = `Dear ${fullname}, your loan has been ${action}. The loan amount is ${formatCurrency(loanAmount)}. Congratulations.`;
+  sendSMS(`+${customerPhone}`, customerSMS)
+    .catch(err => console.error('Failed to send SMS to customer:', err));
 
+  // Fetch root admin phone for SMS
+  const rootAdminQuery = "SELECT phone FROM users WHERE user_type LIKE '%root%'";
+  db.query(rootAdminQuery, (err, rootAdminResult) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return;
+    }
+
+    const rootAdmin = rootAdminResult[0];
+    if (rootAdmin && rootAdmin.phone) {
+      const rootAdminSMS = `A loan for ${fullname} has been ${action} by ${handlerFullname}. Amount: ${formatCurrency(loanAmount)}.`;
+      sendSMS(`+${rootAdmin.phone}`, rootAdminSMS)
+        .catch(err => console.error('Failed to send SMS to root admin:', err));
+    }
+  });
+}
 
 module.exports = router;

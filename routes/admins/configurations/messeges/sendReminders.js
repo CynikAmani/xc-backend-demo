@@ -45,7 +45,7 @@ const sendLoanReminders = async () => {
 
         if (customerMessage) {
           const content = `${customerMessage.message} You have ${daysLeft} days ${hoursLeft} hours and ${minutesLeft} minutes left.`;
-          await sendSMS(`+${customer.phone}`, content);
+          // await sendSMS(`+${customer.phone}`, content);
           await createNotification('reminder', loan.customer_id, content);
         }
 
@@ -54,7 +54,7 @@ const sendLoanReminders = async () => {
 
         if (adminMessage) {
           const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;
-          await sendSMS(`+${admin.phone}`, content);
+          // await sendSMS(`+${admin.phone}`, content);
           await createNotification('reminder', admin.user_id, content);
         }
       } else if (daysLeft === 0) {
@@ -72,7 +72,7 @@ const sendLoanReminders = async () => {
         }
 
         // Add delay before sending the next SMS
-        await delay(10000); // 5-second delay
+        await delay(200000); // delay
 
         if (adminMessage) {
           const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;

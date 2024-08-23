@@ -79,138 +79,131 @@ router.post('/', checkAdmin, (req, res) => {
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-        // Delete the approved loan application from the loan_applications table
+        // After loan approval, delete the loan application
         const deleteQuery = 'DELETE FROM loan_applications WHERE id = ?';
-        db.query(deleteQuery, [loanApplicationId], (err) => {
-          if (err) {
-            console.error('Database deletion error:', err);
+        db.query(deleteQuery, [loanApplicationId], (deleteErr) => {
+          if (deleteErr) {
+            console.error('Error deleting loan application:', deleteErr);
             return res.status(500).json({ message: 'Internal server error' });
           }
 
-          handleNotificationsAndSMS(customerId, loanAmount, collateral, handlerId, newLoanId, res);
+          // Move notification insertion here
+          handleNotifications(customerId, loanAmount, handlerId, newLoanId)
+            .then(() => {
+              // Respond to the client immediately after notifications are inserted
+              res.status(201).json({ message: 'Loan approved, created, and loan application deleted successfully', loanId: newLoanId });
+
+              // Handle SMS sending separately (asynchronously)
+              // handleSMS(customerId, loanAmount, handlerId, newLoanId);
+            })
+            .catch((notificationErr) => {
+              console.error('Error inserting notifications:', notificationErr);
+              res.status(500).json({ message: 'Internal server error' });
+            });
         });
       });
     });
   });
 });
 
-// Helper function to handle notifications and SMS sending
-function handleNotificationsAndSMS(customerId, loanAmount, collateral, handlerId, newLoanId, res) {
-  // Fetch customer details
+// Helper function to handle notifications
+function handleNotifications(customerId, loanAmount, handlerId, newLoanId) {
+  return new Promise((resolve, reject) => {
+    // Fetch customer details
+    const customerQuery = 'SELECT fullname FROM users WHERE user_id = ?';
+    db.query(customerQuery, [customerId], (err, customerResult) => {
+      if (err) return reject(err);
+      if (!customerResult || customerResult.length === 0) return reject(new Error('Customer not found'));
+
+      const { fullname } = customerResult[0];
+
+      // Fetch the handler's full name
+      const handlerQuery = 'SELECT fullname FROM users WHERE user_id = ?';
+      db.query(handlerQuery, [handlerId], (err, handlerResult) => {
+        if (err) return reject(err);
+        if (!handlerResult || handlerResult.length === 0) return reject(new Error('Handler not found'));
+
+        const handlerFullname = handlerResult[0].fullname;
+
+        // Fetch root admin details
+        const rootAdminQuery = "SELECT user_id FROM users WHERE user_type LIKE '%root%'";
+        db.query(rootAdminQuery, (err, rootAdminResult) => {
+          if (err) return reject(err);
+
+          const rootAdminId = rootAdminResult[0]?.user_id;
+
+          // Prepare notification details
+          const notificationDate = moment().format('YYYY-MM-DD HH:mm:ss');
+          const notifications = [
+            {
+              notification_type: 'info',
+              target_user: customerId,
+              content: `Congratulations ${fullname}, your loan application has been approved. Your loan ID is ${newLoanId}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`,
+              date: notificationDate
+            },
+            {
+              notification_type: 'info',
+              target_user: handlerId,
+              content: `You have approved a loan application for ${fullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`,
+              date: notificationDate
+            }
+          ];
+
+          if (rootAdminId) {
+            notifications.push({
+              notification_type: 'info',
+              target_user: rootAdminId,
+              content: `A loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`,
+              date: notificationDate
+            });
+          }
+
+          // Insert notifications into the database
+          const insertNotificationQuery = 'INSERT INTO notifications (notification_type, target_user, content, date) VALUES ?';
+          const notificationValues = notifications.map(n => [n.notification_type, n.target_user, n.content, n.date]);
+
+          db.query(insertNotificationQuery, [notificationValues], (err) => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      });
+    });
+  });
+}
+
+// Helper function to handle SMS sending
+function handleSMS(customerId, loanAmount, handlerId, newLoanId) {
+  // Fetch customer and admin details
   const customerQuery = 'SELECT fullname, phone FROM users WHERE user_id = ?';
   db.query(customerQuery, [customerId], (err, customerResult) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-
-    if (!customerResult || customerResult.length === 0) {
-      return res.status(404).json({ message: 'Customer not found' });
-    }
+    if (err || !customerResult || customerResult.length === 0) return;
 
     const { fullname, phone: customerPhone } = customerResult[0];
 
-    // Fetch the handler's full name
     const handlerQuery = 'SELECT fullname FROM users WHERE user_id = ?';
     db.query(handlerQuery, [handlerId], (err, handlerResult) => {
-      if (err) {
-        console.error('Database query error:', err);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      if (!handlerResult || handlerResult.length === 0) {
-        return res.status(404).json({ message: 'Handler not found' });
-      }
+      if (err || !handlerResult || handlerResult.length === 0) return;
 
       const handlerFullname = handlerResult[0].fullname;
 
-      // Fetch root admin details
-      const rootAdminQuery = "SELECT user_id, phone FROM users WHERE user_type LIKE '%root%'";
+      const rootAdminQuery = "SELECT phone FROM users WHERE user_type LIKE '%root%'";
       db.query(rootAdminQuery, (err, rootAdminResult) => {
-        if (err) {
-          console.error('Database query error:', err);
-          return res.status(500).json({ message: 'Internal server error' });
+        const rootAdminPhone = rootAdminResult[0]?.phone;
+
+        // Send SMS to customer
+        const customerSMS = `Congratulations ${fullname}, your loan application has been approved. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}. Thank you.`;
+        sendSMS(`+${customerPhone}`, customerSMS)
+          .catch(err => console.error('Failed to send SMS to customer:', err));
+
+        // Delay 5 minutes and then send SMS to root admin
+        if (rootAdminPhone) {
+          const rootAdminSMS = `Loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`;
+          setTimeout(() => {
+            sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
+              .catch(err => console.error('Failed to send SMS to root admin:', err));
+          }, 300000); // 5 minutes delay in milliseconds
         }
-
-        const rootAdmin = rootAdminResult[0];
-        const rootAdminId = rootAdmin ? rootAdmin.user_id : null;
-        const rootAdminPhone = rootAdmin ? rootAdmin.phone : null;
-
-        // Prepare notification details
-        const notificationDate = moment().format('YYYY-MM-DD HH:mm:ss');
-        const notifications = [
-          {
-            notification_type: 'info',
-            target_user: customerId,
-            content: `Congratulations ${fullname}, your loan application has been approved. Your loan ID is ${newLoanId}. The loan amount is ${formatCurrency(loanAmount)}. Thank you.`,
-            date: notificationDate
-          },
-          {
-            notification_type: 'info',
-            target_user: handlerId,
-            content: `You have approved a loan application for ${fullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`,
-            date: notificationDate
-          }
-        ];
-
-        if (rootAdminId) {
-          notifications.push({
-            notification_type: 'info',
-            target_user: rootAdminId,
-            content: `A loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`,
-            date: notificationDate
-          });
-        }
-
-        // Insert notifications into the database
-        const insertNotificationQuery = 'INSERT INTO notifications (notification_type, target_user, content, date) VALUES ?';
-        const notificationValues = notifications.map(n => [n.notification_type, n.target_user, n.content, n.date]);
-
-        db.query(insertNotificationQuery, [notificationValues], (err) => {
-          if (err) {
-            console.error('Database notification insertion error:', err);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-
-          // Send SMS to customer immediately
-          const sendCustomerSMS = () => {
-            const customerSMS = `Congratulations ${fullname}, your loan application has been approved. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}. Thank you.`;
-            return sendSMS(`+${customerPhone}`, customerSMS)
-              .catch(err => console.error('Failed to send SMS to customer:', err));
-          };
-
-          // Send SMS to root admin after a 5-minute delay
-          const sendAdminSMS = () => {
-            if (rootAdminPhone) {
-              const rootAdminSMS = `Loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`;
-              return sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
-                .catch(err => console.error('Failed to send SMS to root admin:', err));
-            }
-            return Promise.resolve();
-          };
-
-          // Send the SMS to the customer immediately
-          sendCustomerSMS()
-            .then(() => {
-              // Add a delay of 5 minutes (300,000 milliseconds) before sending the next SMS
-              setTimeout(() => {
-                sendAdminSMS()
-                  .then(() => {
-                    res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
-                  })
-                  .catch(err => {
-                    console.error('Error sending SMS to root admin:', err);
-                    // Respond with a success status but log the error internally
-                    res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
-                  });
-              }, 300000); // 5 minutes delay
-            })
-            .catch(err => {
-              console.error('Error sending SMS to customer:', err);
-              // Respond with a success status but log the error internally
-              res.status(201).json({ message: 'Loan approved and created successfully', loanId: newLoanId });
-            });
-        });
       });
     });
   });
