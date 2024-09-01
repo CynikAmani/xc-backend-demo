@@ -71,13 +71,21 @@ router.get('/', checkAdmin, (req, res) => {
         const totalRepayment = repaymentMap[loan.loanId] || 0;
         const balance = loan.returnAmount - totalRepayment;
 
-        // Calculate time remaining using moment
-        let duration = moment.duration(moment(loan.endDate).diff(moment()));
+        // Parse loan end date as moment object
+        const endDate = moment(loan.endDate);
+        const currentDate = moment();
 
-        // Ensure no negative values for days, hours, and minutes
-        const days = Math.max(duration.days(), 0);
-        const hours = Math.max(duration.hours(), 0);
-        const minutes = Math.max(duration.minutes(), 0);
+        // Calculate time remaining
+        const duration = moment.duration(endDate.diff(currentDate));
+        const daysRemaining = Math.max(duration.days(), 0);
+        const hoursRemaining = Math.max(duration.hours(), 0);
+        const minutesRemaining = Math.max(duration.minutes(), 0);
+
+        // Calculate overdue time if end date is in the past
+        const overdueDuration = endDate.isBefore(currentDate) ? moment.duration(currentDate.diff(endDate)) : moment.duration(0);
+        const daysOverdue = Math.max(overdueDuration.days(), 0);
+        const hoursOverdue = Math.max(overdueDuration.hours(), 0);
+        const minutesOverdue = Math.max(overdueDuration.minutes(), 0);
 
         return {
           loanId: loan.loanId,
@@ -96,7 +104,12 @@ router.get('/', checkAdmin, (req, res) => {
           customerName: loan.customerName,
           balance: balance, 
           amountPaid: totalRepayment, 
-          timeRemaining: { days, hours, minutes } 
+          timeRemaining: { days: daysRemaining, hours: hoursRemaining, minutes: minutesRemaining },
+          timeOverdueElapsed: {
+            days: daysOverdue,
+            hours: hoursOverdue,
+            minutes: minutesOverdue
+          }
         };
       });
 
