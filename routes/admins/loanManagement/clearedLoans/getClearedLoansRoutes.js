@@ -4,20 +4,20 @@ const db = require('../../../../config/db');
 const moment = require('moment'); // Import moment.js for date formatting
 const checkAdmin = require('../../../../auth/checkAdmin')
 
-
 // Route to get cleared loans with payment installments
 router.get('/', checkAdmin, async (req, res) => {
   try {
-    // Query to get cleared loans ordered by end_date (LIFO)
+    // Query to get cleared loans, ordered by the latest payment date (LIFO)
     const loansQuery = `
       SELECT 
         l.loan_id, l.customer_id, l.handler_id, l.loan_type_id, l.loan_amount, l.return_amount, 
         l.interest_rate, l.num_weeks, l.start_date, l.end_date, l.status, l.collateral, l.is_cleared,
-        u.fullname AS owner_name
+        u.fullname AS owner_name,
+        (SELECT MAX(p.date_paid) FROM payments p WHERE p.loan_id = l.loan_id) AS latest_payment_date
       FROM loans l
       JOIN users u ON l.customer_id = u.user_id
       WHERE l.is_cleared = true
-      ORDER BY l.end_date DESC
+      ORDER BY latest_payment_date DESC
     `;
     const [loansResult] = await db.promise().query(loansQuery);
 

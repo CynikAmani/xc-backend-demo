@@ -74,6 +74,16 @@ router.get('/', checkAdmin, async (req, res) => {
         AND YEAR(l.end_date) = YEAR(CURRENT_DATE)
     `;
 
+
+    const yearlyCollectedInterestQuery = `
+      SELECT 
+        SUM(l.return_amount - l.loan_amount) AS yearly_collected_interest
+      FROM loans l
+      WHERE l.is_cleared = true
+        AND YEAR(l.end_date) = YEAR(CURRENT_DATE)
+    `;
+
+
     const numActiveLoansQuery = `
       SELECT COUNT(*) AS num_active_loans
       FROM loans
@@ -96,6 +106,13 @@ router.get('/', checkAdmin, async (req, res) => {
       WHERE MONTH(start_date) = MONTH(CURRENT_DATE)
       AND YEAR(start_date) = YEAR(CURRENT_DATE)
     `;
+
+    const yearlyDisbursedAmountQuery = `
+     SELECT SUM(loan_amount) AS yearly_disbursed_amount
+     FROM loans
+     WHERE YEAR(start_date) = YEAR(CURRENT_DATE)
+   `;
+
 
     const averageLoanAmountQuery = `
       SELECT 
@@ -138,22 +155,46 @@ router.get('/', checkAdmin, async (req, res) => {
     `;
 
     // Execute all queries concurrently
-    const [totalActiveLoansResults] = await db.promise().query(totalActiveLoansQuery);
-    const [totalCustomerBalanceResults] = await db.promise().query(totalCustomerBalanceQuery);
-    const [loanApplicationsResults] = await db.promise().query(loanApplicationsQuery);
-    const [totalUsersResults] = await db.promise().query(totalUsersQuery);
-    const [numDelinquentLoansResults] = await db.promise().query(numDelinquentLoansQuery);
-    const [totalInterestResults] = await db.promise().query(totalInterestQuery);
-    const [monthlyCollectedInterestResults] = await db.promise().query(monthlyCollectedInterestQuery);
-    const [numActiveLoansResults] = await db.promise().query(numActiveLoansQuery);
-    const [totalLoansIssuedResults] = await db.promise().query(totalLoansIssuedQuery);
-    const [totalAmountDisbursedResults] = await db.promise().query(totalAmountDisbursedQuery);
-    const [totalAmountDisbursedCurrentMonthResults] = await db.promise().query(totalAmountDisbursedCurrentMonthQuery);
-    const [averageLoanAmountResults] = await db.promise().query(averageLoanAmountQuery);
-    const [totalRepaidAmountResults] = await db.promise().query(totalRepaidAmountQuery);
-    const [mostActiveUserResults] = await db.promise().query(mostActiveUserQuery);
-    const [topBorrowerResults] = await db.promise().query(topBorrowerQuery);
-    const [totalClearedLoansResults] = await db.promise().query(totalClearedLoansQuery);
+    const [
+      [totalActiveLoansResults],
+      [totalCustomerBalanceResults],
+      [loanApplicationsResults],
+      [totalUsersResults],
+      [numDelinquentLoansResults],
+      [totalInterestResults],
+      [monthlyCollectedInterestResults],
+      [yearlyCollectedInterestResults],
+      [numActiveLoansResults],
+      [totalLoansIssuedResults],
+      [totalAmountDisbursedResults],
+      [totalAmountDisbursedCurrentMonthResults],
+      [yearlyDisbursedAmountResults],
+      [averageLoanAmountResults],
+      [totalRepaidAmountResults],
+      [mostActiveUserResults],
+      [topBorrowerResults],
+      [totalClearedLoansResults]
+    ] = await Promise.all([
+      db.promise().query(totalActiveLoansQuery),
+      db.promise().query(totalCustomerBalanceQuery),
+      db.promise().query(loanApplicationsQuery),
+      db.promise().query(totalUsersQuery),
+      db.promise().query(numDelinquentLoansQuery),
+      db.promise().query(totalInterestQuery),
+      db.promise().query(monthlyCollectedInterestQuery),
+      db.promise().query(yearlyCollectedInterestQuery),
+      db.promise().query(numActiveLoansQuery),
+      db.promise().query(totalLoansIssuedQuery),
+      db.promise().query(totalAmountDisbursedQuery),
+      db.promise().query(totalAmountDisbursedCurrentMonthQuery),
+      db.promise().query(yearlyDisbursedAmountQuery),
+      db.promise().query(averageLoanAmountQuery),
+      db.promise().query(totalRepaidAmountQuery),
+      db.promise().query(mostActiveUserQuery),
+      db.promise().query(topBorrowerQuery),
+      db.promise().query(totalClearedLoansQuery)
+    ]);
+    
 
     // Extract results from the query responses
     const totalActiveLoans = totalActiveLoansResults[0].total_active_loans;
@@ -163,10 +204,12 @@ router.get('/', checkAdmin, async (req, res) => {
     const numDelinquentLoans = numDelinquentLoansResults[0].num_delinquent_loans;
     const totalInterest = totalInterestResults[0].total_interest || 0;
     const monthlyCollectedInterest = monthlyCollectedInterestResults[0].monthly_collected_interest || 0;
+    const yearlyCollectedInterest = yearlyCollectedInterestResults[0].yearly_collected_interest || 0;
     const numActiveLoans = numActiveLoansResults[0].num_active_loans;
     const totalLoansIssued = totalLoansIssuedResults[0].total_loans_issued;
     const totalAmountDisbursed = totalAmountDisbursedResults[0].total_amount_disbursed || 0;
     const totalAmountDisbursedCurrentMonth = totalAmountDisbursedCurrentMonthResults[0].total_amount_disbursed_current_month || 0;
+    const yearlyDisbursedAmount = yearlyDisbursedAmountResults[0].yearly_disbursed_amount || 0;
     const averageLoanAmount = averageLoanAmountResults[0].average_loan_amount || 0;
     const totalRepaidAmount = totalRepaidAmountResults[0].total_repaid_amount || 0;
     const mostActiveUser = mostActiveUserResults[0] || {};
@@ -183,10 +226,12 @@ router.get('/', checkAdmin, async (req, res) => {
       numDelinquentLoans,
       totalInterest,
       monthlyCollectedInterest,
+      yearlyCollectedInterest,
       numActiveLoans,
       totalLoansIssued,
       totalAmountDisbursed,
       totalAmountDisbursedCurrentMonth,
+      yearlyDisbursedAmount,
       averageLoanAmount,
       totalRepaidAmount,
       mostActiveUser,
