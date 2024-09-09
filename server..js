@@ -150,5 +150,5 @@ app.use((req, res) => {
 });
 
 // Define Port
-const PORT = process.env.PORT || 2025;
+const PORT = process.env.PORT || 5555;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
