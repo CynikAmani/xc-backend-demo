@@ -81,8 +81,7 @@ const getUserTypeRoutes = require('./routes/generics/getUserTypeRoutes.js');
 const getUserNotificationsRoutes = require('./routes/generics/getUserNotificationsRoutes.js');
 const deleteNotificationRoutes = require('./routes/generics/deleteNotificationRoutes.js');
 const deleteNotificationsRoutes = require('./routes/generics/deleteNotificationsRoutes.js');
-
-
+const getCustomerIdsRoutes = require('./routes/admins/loanManagement/newLoans/getCustomerIdsRoutes.js');
 
 // Use Routes
 app.use('/api', test);
@@ -136,6 +135,7 @@ app.use('/api/getUserType', getUserTypeRoutes);
 app.use('/api/getUserNotifications', getUserNotificationsRoutes);
 app.use('/api/deleteNotification', deleteNotificationRoutes);
 app.use('/api/deleteNotifications', deleteNotificationsRoutes);
+app.use('/api/getCustomerIds', getCustomerIdsRoutes);
 
 
 
