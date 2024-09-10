@@ -20,11 +20,12 @@ app.use(express.json());
 app.use('/var/data', express.static(path.join(__dirname, 'uploads')));
 
 // Session setup
+// Session setup
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: true }
+    cookie: { secure: false } // Set secure: true in production with HTTPS
 }));
 
 
