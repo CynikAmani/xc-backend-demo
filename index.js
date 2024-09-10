@@ -11,17 +11,28 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+    origin: ['https://www.xandercreditors.com', 'http://localhost:3000'],
+    credentials: true,
+  };
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/var/data', express.static(path.join(__dirname, 'uploads')));
 
 // Session setup
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Set secure: true in production with HTTPS
+    cookie: {
+        name: process.env.COOKIE_NAME || 'session_id',
+        secure: process.env.COOKIE_SECURE === 'true',
+        httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+        sameSite: 'None',
+        maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 172800
+    }
 }));
+
 
 // Routes
 const test = require('./auth/test.js');
@@ -58,7 +69,7 @@ const getClearedLoansRoutes = require('./routes/admins/loanManagement/clearedLoa
 const saveLoanApplicationRoutes = require('./routes/customers/loans/loanApplications/saveLoanApplicationRoutes.js');
 const deleteLoanApplicationRoutes = require('./routes/customers/loans/loanApplications/deleteLoanApplicationRoutes.js');
 const getLoanApplicationsRoutes = require('./routes/customers/loans/loanApplications/getLoanApplicationsRoutes.js');
-const getLoanApplicationsAsAdminRoutes = require('./routes/admins/loanManagement/loanApplications/getLoanApplicationsAsAdminRoutes.js.js');
+const getLoanApplicationsAsAdminRoutes = require('./routes/admins/loanManagement/loanApplications/getLoanApplicationsAsAdminRoutes.js');
 const declineLoanApplicationRoutes = require('./routes/admins/loanManagement/loanApplications/declineLoanApplicationRoutes.js');
 const approveLoanRoutes = require('./routes/admins/loanManagement/loanApplications/approveLoanRoutes.js');
 const getCustomerLoansRoutes = require('./routes/customers/loans/customerLoans/getCustomerLoansRoutes.js');
