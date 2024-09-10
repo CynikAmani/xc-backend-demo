@@ -24,13 +24,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: {
-        name: process.env.COOKIE_NAME || 'session_id',
-        secure: process.env.COOKIE_SECURE === 'true',
-        httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
-        sameSite: 'None',
-        maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 172800
-    }
+    cookie: { secure: true }
 }));
 
 
