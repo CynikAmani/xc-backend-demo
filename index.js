@@ -57,6 +57,7 @@ const deleteTermsAndConditionsRoutes = require('./routes/admins/configurations/d
 const getNumWeeksRoutes = require('./routes/admins/loanManagement/newLoans/getNumWeeksRoutes.js');
 const saveNewLoanRoutes = require('./routes/admins/loanManagement/newLoans/saveNewLoanRoutes.js');
 const getUnclearedLoansRoutes = require('./routes/admins/loanManagement/newLoans/getUnclearedLoansRoutes.js');
+const getOverdueLoansRoutes = require('./routes/admins/loanManagement/newLoans/getOverdueLoansRoutes.js');
 const deleteLoanRoutes = require('./routes/admins/loanManagement/newLoans/deleteLoanRoutes.js');
 const loanRepaymentsRoutes = require('./routes/admins/loanManagement/loanRepayments/loanRepaymentsRoutes.js');
 const getLoanBalanceRoutes = require('./routes/admins/loanManagement/loanRepayments/getLoanBalanceRoutes.js');
@@ -111,6 +112,7 @@ app.use('/api/deleteTermsAndConditions', deleteTermsAndConditionsRoutes);
 app.use('/api/getNumWeeks', getNumWeeksRoutes);
 app.use('/api/saveNewLoan', saveNewLoanRoutes);
 app.use('/api/getUnclearedLoans', getUnclearedLoansRoutes);
+app.use('/api/getOverdueLoans', getOverdueLoansRoutes);
 app.use('/api/deleteLoan', deleteLoanRoutes);
 app.use('/api/loanRepayments', loanRepaymentsRoutes);
 app.use('/api/getLoanBalance', getLoanBalanceRoutes);
@@ -156,5 +158,5 @@ app.use((req, res) => {
 });
 
 // Define Port
-const PORT = process.env.PORT || 5555;
+const PORT = process.env.PORT || 9999;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

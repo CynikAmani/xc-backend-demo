@@ -3,22 +3,26 @@ const bcrypt = require('bcrypt');
 require('dotenv').config();
 const { createTablesQueries, insertInitialDataQueries } = require('./dbInitialQueries');
 
-// Create a MySQL connection
-const db = mysql.createConnection({
+// Create a MySQL connection pool
+const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   multipleStatements: true, // This allows executing multiple statements in one query
+  waitForConnections: true,  // Waits for connections when the limit is reached
+  connectionLimit: 4,       // Limits the maximum number of connections to 4
+  queueLimit: 0              // Unlimited queue for connection requests
 });
 
-// Connect to MySQL server
-db.connect(err => {
+// Test the connection pool
+db.getConnection((err, connection) => {
   if (err) {
     console.error('MySQL connection failed:', err.stack);
     return;
   }
   console.log('Connected to MySQL server.');
+  connection.release();  // Release the connection back to the pool
 
   // Initialize the database (create tables)
   initializeDatabase();
@@ -98,6 +102,10 @@ function insertInitialDataIfNeeded() {
 }
 
 async function checkAndCreateRootAdmin() {
+  const usersTable = process.env.USERS_TABLE_NAME;
+  const userTypeColumn = process.env.USER_TYPE_COLUMN_NAME;
+  const userTypeValue = process.env.USER_TYPE_COLUMN_VALUE;
+
   const checkUserQuery = `SELECT * FROM users WHERE user_type = 'root_admin' LIMIT 1;`;
 
   db.query(checkUserQuery, async (err, results) => {

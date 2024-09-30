@@ -4,7 +4,7 @@ const db = require('../../../../config/db');
 const checkAdmin = require('../../../../auth/checkAdmin');
 const moment = require('moment');
 
-// Route to get active loans with balance calculation
+// Route to get uncleared loans that have not gone beyond due date
 router.get('/', checkAdmin, (req, res) => {
   const query = `
     SELECT
@@ -27,7 +27,7 @@ router.get('/', checkAdmin, (req, res) => {
     JOIN users u ON l.customer_id = u.user_id
     JOIN loan_types lt ON l.loan_type_id = lt.loan_type_id
     JOIN users hu ON l.handler_id = hu.user_id  -- Join to get the handler's name
-    WHERE l.is_cleared = false
+    WHERE l.is_cleared = false AND l.end_date > NOW()  -- Only get uncleared loans that are not overdue
     ORDER BY l.end_date
   `;
 
@@ -81,12 +81,6 @@ router.get('/', checkAdmin, (req, res) => {
         const hoursRemaining = Math.max(duration.hours(), 0);
         const minutesRemaining = Math.max(duration.minutes(), 0);
 
-        // Calculate overdue time if end date is in the past
-        const overdueDuration = endDate.isBefore(currentDate) ? moment.duration(currentDate.diff(endDate)) : moment.duration(0);
-        const daysOverdue = Math.max(overdueDuration.days(), 0);
-        const hoursOverdue = Math.max(overdueDuration.hours(), 0);
-        const minutesOverdue = Math.max(overdueDuration.minutes(), 0);
-
         return {
           loanId: loan.loanId,
           customerId: loan.customerId,
@@ -104,12 +98,7 @@ router.get('/', checkAdmin, (req, res) => {
           customerName: loan.customerName,
           balance: balance, 
           amountPaid: totalRepayment, 
-          timeRemaining: { days: daysRemaining, hours: hoursRemaining, minutes: minutesRemaining },
-          timeOverdueElapsed: {
-            days: daysOverdue,
-            hours: hoursOverdue,
-            minutes: minutesOverdue
-          }
+          timeRemaining: { days: daysRemaining, hours: hoursRemaining, minutes: minutesRemaining }
         };
       });
 
