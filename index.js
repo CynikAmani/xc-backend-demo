@@ -83,6 +83,16 @@ const getUserNotificationsRoutes = require('./routes/generics/getUserNotificatio
 const deleteNotificationRoutes = require('./routes/generics/deleteNotificationRoutes.js');
 const deleteNotificationsRoutes = require('./routes/generics/deleteNotificationsRoutes.js');
 const getCustomerIdsRoutes = require('./routes/admins/loanManagement/newLoans/getCustomerIdsRoutes.js');
+const setAboutRoutes = require('./routes/admins/configurations/about/setAboutRoutes.js');
+const getAboutInfoRoutes = require('./routes/admins/configurations/about/getAboutInfoRoutes.js');
+const insertUpdateAdvertRoutes = require('./routes/admins/configurations/adverts/insertUpdateAdvertRoutes.js');
+const getAdvertRoutes = require('./routes/admins/configurations/adverts/getAdvertRoutes.js');
+const insertBrandImageRoutes = require('./routes/admins/configurations/adverts/insertBrandImageRoutes.js');
+const getBrandImagesRoutes = require('./routes/admins/configurations/adverts/getBrandImagesRoutes.js');
+const deleteBrandImageRoutes = require('./routes/admins/configurations/adverts/deleteBrandImageRoutes.js');
+
+
+
 
 // Use Routes
 app.use('/api', test);
@@ -138,6 +148,13 @@ app.use('/api/getUserNotifications', getUserNotificationsRoutes);
 app.use('/api/deleteNotification', deleteNotificationRoutes);
 app.use('/api/deleteNotifications', deleteNotificationsRoutes);
 app.use('/api/getCustomerIds', getCustomerIdsRoutes);
+app.use('/api/setAbout', setAboutRoutes);
+app.use('/api/getAboutInfo', getAboutInfoRoutes);
+app.use('/api/insertUpdateAdvert', insertUpdateAdvertRoutes);
+app.use('/api/getAdvert', getAdvertRoutes);
+app.use('/api/insertBrandImage', insertBrandImageRoutes);
+app.use('/api/getBrandImagesRoutes', getBrandImagesRoutes);
+app.use('/api/deleteBrandImage', deleteBrandImageRoutes);
 
 
 

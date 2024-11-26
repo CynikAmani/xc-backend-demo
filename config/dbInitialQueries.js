@@ -130,7 +130,26 @@ const createTablesQueries = [
     system_name VARCHAR(200),
     slogan VARCHAR(250),
     logo_img_name VARCHAR(400)
-);`
+);`,
+`CREATE TABLE IF NOT EXISTS about (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    brand_mission VARCHAR(1000),
+    brand_vision VARCHAR(1000),
+    contact_phone VARCHAR(20),
+    whatsapp_phone VARCHAR(20),
+    contact_email VARCHAR(256),
+    core_values VARCHAR(800)
+);`,
+`CREATE TABLE IF NOT EXISTS adverts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    advert_image_name VARCHAR(255),
+    advert_content TEXT
+);`,
+`CREATE TABLE IF NOT EXISTS brand_images (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    brand_image_name VARCHAR(255)
+);
+`
   ];
   
   // SQL queries for inserting initial data
