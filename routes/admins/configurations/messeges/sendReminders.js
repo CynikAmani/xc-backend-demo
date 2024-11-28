@@ -124,15 +124,7 @@ const sendLoanReminders = () => {
     });
 };
 
-// Function to schedule the reminder job at 8 AM and execute immediately after server starts
-const scheduleLoanReminders = () => {
-  // Ensure immediate execution of loan reminders after server starts
-
-  // Schedule to run at 8 AM every day
-  cron.schedule('0 8 * * *', () => {
-    sendLoanReminders(); 
-  });
-};
+// Function to schedule the reminder job at 8 AM and execute immediately after server start
 sendLoanReminders();
 
 module.exports = { sendLoanReminders };
