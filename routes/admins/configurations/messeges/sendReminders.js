@@ -31,6 +31,16 @@ const sendLoanReminders = () => {
                         const customer = users.find(user => user.user_id === loan.customer_id);
                         const admin = users.find(user => user.user_type.includes('root'));
 
+                        if (!customer) {
+                          console.error(`Customer not found for loan ID: ${loan.loan_id}`);
+                          return;  // Skip this loan if the customer is not found
+                        }
+
+                        if (!admin) {
+                          console.error(`Admin not found for loan ID: ${loan.loan_id}`);
+                          return;  // Skip this loan if the admin is not found
+                        }
+
                         const createNotification = (type, targetUser, content) => {
                           db.promise().query('INSERT INTO notifications (notification_type, target_user, content, date) VALUES (?, ?, ?, ?)', 
                             [type, targetUser, content, now.format('YYYY-MM-DD HH:mm:ss')]
@@ -128,4 +138,3 @@ const sendLoanReminders = () => {
 sendLoanReminders();
 
 module.exports = { sendLoanReminders };
-
