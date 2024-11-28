@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../../../config/db');
-const checkSession = require('../../../../auth/checkSession')
+const checkSession = require('../../../../auth/checkSession');
 const moment = require('moment');
 
 // Route to get customer's loans with balance calculation
@@ -34,7 +34,7 @@ router.get('/', checkSession, (req, res) => {
     const loanIds = loanResults.map(loan => loan.loanId);
 
     if (loanIds.length === 0) {
-      return res.status(200).json([]); 
+      return res.status(200).json([]);
     }
 
     // Query to fetch total repayments for each loan
@@ -59,18 +59,34 @@ router.get('/', checkSession, (req, res) => {
         return acc;
       }, {});
 
-      // Calculate the balance and timeRemaining for each loan
+      // Calculate the balance and timeRemaining or elapsedSinceDue for each loan
       const formattedLoans = loanResults.map(loan => {
         const totalRepayment = repaymentMap[loan.loanId] || 0;
         const balance = loan.returnAmount - totalRepayment;
 
-        // Calculate time remaining
+        // Calculate duration between endDate and current date
         let duration = moment.duration(moment(loan.endDate).diff(moment()));
 
-        // Ensure no negative values for days, hours, and minutes
-        const days = Math.max(duration.days(), 0);
-        const hours = Math.max(duration.hours(), 0);
-        const minutes = Math.max(duration.minutes(), 0);
+        // Initialize timeRemaining and elapsedSinceDue
+        let timeRemaining = null;
+        let elapsedSinceDue = null;
+
+        if (duration.asMilliseconds() >= 0) {
+          // Loan is not overdue: Calculate time remaining
+          timeRemaining = {
+            days: Math.max(duration.days(), 0),
+            hours: Math.max(duration.hours(), 0),
+            minutes: Math.max(duration.minutes(), 0),
+          };
+        } else {
+          // Loan is overdue: Calculate elapsed time since due date
+          duration = moment.duration(moment().diff(moment(loan.endDate)));
+          elapsedSinceDue = {
+            days: duration.days(),
+            hours: duration.hours(),
+            minutes: duration.minutes(),
+          };
+        }
 
         return {
           loanId: loan.loanId,
@@ -83,7 +99,8 @@ router.get('/', checkSession, (req, res) => {
           collateral: loan.collateral,
           startDate: loan.startDate,
           endDate: loan.endDate,
-          timeRemaining: { days, hours, minutes },
+          timeRemaining: timeRemaining,         // Null if overdue
+          elapsedSinceDue: elapsedSinceDue,     // Null if not overdue
           status: loan.status
         };
       });

@@ -1,15 +1,15 @@
 const db = require('../../../../config/db');
 const { sendSMS } = require('../../../../config/twilioService');
 const moment = require('moment');
+const cron = require('node-cron'); // Use node-cron for scheduling jobs
 
 // Function to introduce a delay
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const sendLoanReminders = () => {
-  // Get the current date and time
   const now = moment();
 
-  // 1. Query for loans not cleared
+  // Query for loans not cleared
   db.promise().query('SELECT * FROM loans WHERE is_cleared = false')
     .then(([loans]) => {
       loans.forEach(loan => {
@@ -31,7 +31,6 @@ const sendLoanReminders = () => {
                         const customer = users.find(user => user.user_id === loan.customer_id);
                         const admin = users.find(user => user.user_type.includes('root'));
 
-                        // Function to create notification
                         const createNotification = (type, targetUser, content) => {
                           db.promise().query('INSERT INTO notifications (notification_type, target_user, content, date) VALUES (?, ?, ?, ?)', 
                             [type, targetUser, content, now.format('YYYY-MM-DD HH:mm:ss')]
@@ -51,7 +50,6 @@ const sendLoanReminders = () => {
                             createNotification('reminder', loan.customer_id, content);
                           }
 
-                          // Add delay before sending the next SMS
                           delay(5000).then(() => {
                             if (adminMessage) {
                               const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;
@@ -76,7 +74,6 @@ const sendLoanReminders = () => {
                             createNotification('alert', loan.customer_id, content);
                           }
 
-                          // Add delay before sending the next SMS
                           delay(200000).then(() => {
                             if (adminMessage) {
                               const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;
@@ -86,8 +83,8 @@ const sendLoanReminders = () => {
                             }
                           });
 
-                        } else if (now.isAfter(endDate) && now.diff(endDate, 'hours') <= 36) {
-                          // Send overdue reminder
+                        } else if (now.isAfter(endDate)) {
+                          // **Send overdue reminder and update the loan status immediately**
                           const customerMessage = overdueMessages.find(msg => msg.target_user === 'customer');
                           const adminMessage = overdueMessages.find(msg => msg.target_user === 'admin');
 
@@ -99,7 +96,6 @@ const sendLoanReminders = () => {
                             createNotification('alert', loan.customer_id, content);
                           }
 
-                          // Add delay before sending the next SMS
                           delay(50000).then(() => {
                             if (adminMessage) {
                               const content = `${adminMessage.message} Loan ID: ${loan.loan_id}, Customer Phone: ${customer.phone}`;
@@ -109,9 +105,13 @@ const sendLoanReminders = () => {
                             }
                           });
 
-                          // Update the status of the loan to 'overdue'
-                          db.promise().query('UPDATE loans SET status = "overdue" WHERE loan_id = ?', [loan.loan_id])
-                            .catch(err => console.error('Error updating loan status:', err));
+                          
+                          // **Update the status of the loan to 'overdue' if the due date has passed**
+                          db.promise().query(
+                            'UPDATE loans SET status = "overdue" WHERE loan_id = ? AND end_date < ?',
+                            [loan.loan_id, now.format('YYYY-MM-DD HH:mm:ss')]  // Compare both date and time
+                          )
+                          .catch(err => console.error('Error updating loan status to overdue:', err));
                         }
                       });
                   });
@@ -124,4 +124,16 @@ const sendLoanReminders = () => {
     });
 };
 
+// Function to schedule the reminder job at 8 AM and execute immediately after server starts
+const scheduleLoanReminders = () => {
+  // Ensure immediate execution of loan reminders after server starts
+
+  // Schedule to run at 8 AM every day
+  cron.schedule('0 8 * * *', () => {
+    sendLoanReminders(); 
+  });
+};
+sendLoanReminders();
+
 module.exports = { sendLoanReminders };
+

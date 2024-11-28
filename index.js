@@ -4,7 +4,8 @@ const dotenv = require('dotenv');
 const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron'); //scheduler 
-require('./routes/admins/configurations/messeges/sendSMSOnScheduleRoutes.js')
+require('./routes/admins/configurations/messeges/sendSMSOnScheduleRoutes.js');
+
 
 dotenv.config();
 
