@@ -90,11 +90,28 @@ router.post('/', checkAdmin, (req, res) => {
           // Move notification insertion here
           handleNotifications(customerId, loanAmount, handlerId, newLoanId)
             .then(() => {
-              // Respond to the client immediately after notifications are inserted
-              res.status(201).json({ message: 'Loan approved, created, and loan application deleted successfully', loanId: newLoanId });
+              // Fetch customer details (fullname and email) after loan is approved
+              const customerQuery = 'SELECT fullname, email FROM users WHERE user_id = ?';
+              db.query(customerQuery, [customerId], (err, customerResult) => {
+                if (err) {
+                  console.error('Error fetching customer information:', err);
+                  return res.status(500).json({ message: 'Internal server error' });
+                }
 
-              // Handle SMS sending separately (asynchronously)
-              // handleSMS(customerId, loanAmount, handlerId, newLoanId);
+                if (customerResult.length === 0) {
+                  return res.status(404).json({ message: 'Customer information not found' });
+                }
+
+                const { fullname, email } = customerResult[0];
+
+                // Respond with customer information and success message
+                res.status(201).json({
+                  message: 'Loan approved, created, and loan application deleted successfully',
+                  loanId: newLoanId,
+                  customer: { fullname, email },
+                });
+
+              });
             })
             .catch((notificationErr) => {
               console.error('Error inserting notifications:', notificationErr);
@@ -167,43 +184,6 @@ function handleNotifications(customerId, loanAmount, handlerId, newLoanId) {
             resolve();
           });
         });
-      });
-    });
-  });
-}
-
-// Helper function to handle SMS sending
-function handleSMS(customerId, loanAmount, handlerId, newLoanId) {
-  // Fetch customer and admin details
-  const customerQuery = 'SELECT fullname, phone FROM users WHERE user_id = ?';
-  db.query(customerQuery, [customerId], (err, customerResult) => {
-    if (err || !customerResult || customerResult.length === 0) return;
-
-    const { fullname, phone: customerPhone } = customerResult[0];
-
-    const handlerQuery = 'SELECT fullname FROM users WHERE user_id = ?';
-    db.query(handlerQuery, [handlerId], (err, handlerResult) => {
-      if (err || !handlerResult || handlerResult.length === 0) return;
-
-      const handlerFullname = handlerResult[0].fullname;
-
-      const rootAdminQuery = "SELECT phone FROM users WHERE user_type LIKE '%root%'";
-      db.query(rootAdminQuery, (err, rootAdminResult) => {
-        const rootAdminPhone = rootAdminResult[0]?.phone;
-
-        // Send SMS to customer
-        const customerSMS = `Congratulations ${fullname}, your loan application has been approved. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}. Thank you.`;
-        sendSMS(`+${customerPhone}`, customerSMS)
-          .catch(err => console.error('Failed to send SMS to customer:', err));
-
-        // Delay 5 minutes and then send SMS to root admin
-        if (rootAdminPhone) {
-          const rootAdminSMS = `Loan application for ${fullname} has been approved by ${handlerFullname}. Loan ID: ${newLoanId}. Amount: ${formatCurrency(loanAmount)}`;
-          setTimeout(() => {
-            sendSMS(`+${rootAdminPhone}`, rootAdminSMS)
-              .catch(err => console.error('Failed to send SMS to root admin:', err));
-          }, 300000); // 5 minutes delay in milliseconds
-        }
       });
     });
   });

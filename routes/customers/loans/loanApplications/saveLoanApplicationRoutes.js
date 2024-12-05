@@ -27,8 +27,45 @@ router.post('/', checkSession, (req, res) => {
 
     const { is_blocked } = result[0];
     if (is_blocked) {
-      return res.status(423).json({ message: 'Your account is blocked. You cannot apply for a loan. to resolve this, consider contacting Xander Creditors' });
+      return res.status(423).json({ message: 'Your account is blocked. You cannot apply for a loan. To resolve this, consider contacting Xander Creditors.' });
     }
+
+    const handleResponse = (loanApplicationId) => {
+      // Fetch customer and admin information
+      const customerQuery = 'SELECT fullname, email FROM users WHERE user_id = ?';
+      const adminQuery = 'SELECT email FROM users WHERE user_type LIKE ?';
+
+      db.query(customerQuery, [userId], (err, customerResult) => {
+        if (err) {
+          console.error('Error fetching customer information:', err);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (customerResult.length === 0) {
+          return res.status(404).json({ message: 'Customer information not found.' });
+        }
+
+        const customer = customerResult[0];
+
+        db.query(adminQuery, ['%root%'], (err, adminResults) => {
+          if (err) {
+            console.error('Error fetching admin information:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+
+          const admins = adminResults.map((admin) => admin.email);
+
+          res.status(200).json({
+            message: loanApplicationId
+              ? 'Loan application updated successfully.'
+              : 'Loan application submitted successfully.',
+            loanApplicationId,
+            customer,
+            admins,
+          });
+        });
+      });
+    };
 
     if (loanApplicationId) {
       // Update existing loan application
@@ -46,7 +83,7 @@ router.post('/', checkSession, (req, res) => {
         if (result.affectedRows === 0) {
           return res.status(404).json({ message: 'Loan application not found or not authorized to update.' });
         }
-        res.status(200).json({ message: 'Loan application updated successfully.' });
+        handleResponse(loanApplicationId);
       });
     } else {
       // Insert new loan application
@@ -60,7 +97,7 @@ router.post('/', checkSession, (req, res) => {
           console.error('Database insertion error:', err);
           return res.status(500).json({ message: 'Internal server error' });
         }
-        res.status(201).json({ message: 'Loan application submitted successfully.', loanApplicationId: result.insertId });
+        handleResponse(result.insertId);
       });
     }
   });
