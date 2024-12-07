@@ -5,7 +5,8 @@ const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron'); //scheduler 
 require('./routes/admins/configurations/messeges/sendSMSOnScheduleRoutes.js');
-
+const deleteAllBrandImages = require('./routes/generics/deleteBrandImagesRoutes.js');
+deleteAllBrandImages();
 
 dotenv.config();
 
@@ -82,6 +83,8 @@ const getCustomerLoansStatsRoutes = require('./routes/customers/dashboard/getCus
 const getAdminLoanStatsRoutes = require('./routes/admins/dashboard/getAdminLoanStatsRoutes.js');
 const getUserTypeRoutes = require('./routes/generics/getUserTypeRoutes.js');
 const getUserNotificationsRoutes = require('./routes/generics/getUserNotificationsRoutes.js');
+const markViewedNotificationsRoutes = require('./routes/generics/markViewedNotificationsRoutes.js');
+const getNumNewNotificationsRoutes = require('./routes/generics/getNumNewNotificationsRoutes.js');
 const deleteNotificationRoutes = require('./routes/generics/deleteNotificationRoutes.js');
 const deleteNotificationsRoutes = require('./routes/generics/deleteNotificationsRoutes.js');
 const getCustomerIdsRoutes = require('./routes/admins/loanManagement/newLoans/getCustomerIdsRoutes.js');
@@ -148,6 +151,8 @@ app.use('/api/getCustomerLoansStats', getCustomerLoansStatsRoutes);
 app.use('/api/getAdminLoanStats', getAdminLoanStatsRoutes);
 app.use('/api/getUserType', getUserTypeRoutes);
 app.use('/api/getUserNotifications', getUserNotificationsRoutes);
+app.use('/api/markViewedNotifications', markViewedNotificationsRoutes);
+app.use('/api/getNumNewNotifications', getNumNewNotificationsRoutes);
 app.use('/api/deleteNotification', deleteNotificationRoutes);
 app.use('/api/deleteNotifications', deleteNotificationsRoutes);
 app.use('/api/getCustomerIds', getCustomerIdsRoutes);

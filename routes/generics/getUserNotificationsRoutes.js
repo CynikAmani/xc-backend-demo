@@ -10,7 +10,8 @@ router.get('/', checkSession, (req, res) => {
   const query = `
     SELECT 
       notification_id AS id, 
-      notification_type AS type, 
+      notification_type AS type,
+      is_viewed, 
       content, 
       DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date 
     FROM 
