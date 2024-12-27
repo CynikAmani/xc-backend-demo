@@ -12,7 +12,7 @@ router.get('/', checkAdmin, (req, res) => {
       lt.type_name AS loanType, 
       ir.num_weeks AS numWeeks,
       ir.normal_rate AS normalRate, 
-      ir.overdue_rate AS overdueRate
+      ir.standard_rate AS standardRate
     FROM 
       interest_rates ir
     JOIN 

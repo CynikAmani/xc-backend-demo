@@ -4,7 +4,6 @@ const db = require('../../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 const checkAdmin = require('../../../../auth/checkAdmin');
-const { sendSMS } = require('../../../../config/twilioService');
 
 // Helper function to calculate the return amount
 const calculateReturnAmount = (loanAmount, interestRate) => {

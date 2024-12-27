@@ -128,21 +128,22 @@ router.get('/', checkAdmin, async (req, res) => {
     `;
 
     const mostActiveUserQuery = `
-      SELECT u.fullname, 
-        COALESCE(COUNT(DISTINCT l.loan_id), 0) AS number_of_loans_borrowed, 
-        COALESCE(COUNT(DISTINCT la.id), 0) AS number_of_applications
-      FROM users u
-      LEFT JOIN loans l ON l.customer_id = u.user_id
-      LEFT JOIN loan_applications la ON la.applicant_id = u.user_id
-      GROUP BY u.user_id, u.fullname
-      ORDER BY (COALESCE(COUNT(DISTINCT l.loan_id), 0) + COALESCE(COUNT(DISTINCT la.id), 0)) DESC
-      LIMIT 1
-    `;
+       SELECT u.fullname, 
+         COALESCE(COUNT(DISTINCT l.loan_id), 0) AS number_of_loans_borrowed, 
+         COALESCE(COUNT(DISTINCT la.id), 0) AS number_of_applications
+       FROM users u
+       LEFT JOIN loans l ON l.customer_id = u.user_id AND YEAR(l.start_date) = YEAR(CURRENT_DATE)
+       LEFT JOIN loan_applications la ON la.applicant_id = u.user_id
+       GROUP BY u.user_id, u.fullname
+       ORDER BY (COALESCE(COUNT(DISTINCT l.loan_id), 0) + COALESCE(COUNT(DISTINCT la.id), 0)) DESC
+       LIMIT 1
+     `;
 
     const topBorrowerQuery = `
       SELECT u.user_id, u.fullname, SUM(l.loan_amount) AS total_loan_amount
       FROM loans l
       JOIN users u ON l.customer_id = u.user_id
+      WHERE YEAR(l.start_date) = YEAR(CURRENT_DATE)
       GROUP BY u.user_id, u.fullname
       ORDER BY total_loan_amount DESC
       LIMIT 1

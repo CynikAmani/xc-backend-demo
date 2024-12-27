@@ -4,7 +4,8 @@ const dotenv = require('dotenv');
 const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron'); //scheduler 
-require('./routes/admins/configurations/messeges/sendSMSOnScheduleRoutes.js');
+require('./routes/admins/configurations/messeges/updateLoanStatusOnScheduleRoutes.js');
+
 const deleteAllBrandImages = require('./routes/generics/deleteBrandImagesRoutes.js');
 deleteAllBrandImages();
 
@@ -95,6 +96,8 @@ const getAdvertRoutes = require('./routes/admins/configurations/adverts/getAdver
 const insertBrandImageRoutes = require('./routes/admins/configurations/adverts/insertBrandImageRoutes.js');
 const getBrandImagesRoutes = require('./routes/admins/configurations/adverts/getBrandImagesRoutes.js');
 const deleteBrandImageRoutes = require('./routes/admins/configurations/adverts/deleteBrandImageRoutes.js');
+const resetInterestRatesRoutes = require('./routes/admins/configurations/promotions/resetInterestRatesRoutes.js');
+const setDiscountRateRoutes = require('./routes/admins/configurations/promotions/setDiscountRateRoutes.js');
 
 
 
@@ -163,6 +166,8 @@ app.use('/api/getAdvert', getAdvertRoutes);
 app.use('/api/insertBrandImage', insertBrandImageRoutes);
 app.use('/api/getBrandImagesRoutes', getBrandImagesRoutes);
 app.use('/api/deleteBrandImage', deleteBrandImageRoutes);
+app.use('/api/resetInterestRates', resetInterestRatesRoutes);
+app.use('/api/setDiscountRate', setDiscountRateRoutes);
 
 
 
