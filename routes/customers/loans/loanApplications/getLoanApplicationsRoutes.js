@@ -15,6 +15,7 @@ router.get('/', checkSession, (req, res) => {
       la.collateral,
       la.num_weeks,
       la.date_applied,
+      la.discount,
       lt.type_name AS loan_type,
       ir.normal_rate AS interest_rate
     FROM loan_applications la
@@ -35,6 +36,7 @@ router.get('/', checkSession, (req, res) => {
       collateral: row.collateral,
       numWeeks: row.num_weeks,
       dateApplied: row.date_applied,
+      discount: row.discount,
       loanType: row.loan_type,
       interestRate: row.interest_rate,
     }));

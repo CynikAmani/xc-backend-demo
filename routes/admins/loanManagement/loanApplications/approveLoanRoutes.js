@@ -40,29 +40,33 @@ router.post('/', checkAdmin, (req, res) => {
 
     const { normal_rate, loan_type_id } = rateResult[0];
     const interestRate = normal_rate;
-    const returnAmount = calculateReturnAmount(loanAmount, interestRate);
 
-    // Calculate the start and end date
-    const startDate = moment().format('YYYY-MM-DD HH:mm:ss');
-    const endDate = moment().add(numWeeks, 'weeks').format('YYYY-MM-DD HH:mm:ss');
-
-    // Fetch the applicant_id from the loan_applications table
-    const applicationQuery = 'SELECT applicant_id FROM loan_applications WHERE id = ?';
-    db.query(applicationQuery, [loanApplicationId], (err, appResult) => {
+    // Fetch the discount from the loan_applications table
+    const discountQuery = 'SELECT discount, applicant_id FROM loan_applications WHERE id = ?';
+    db.query(discountQuery, [loanApplicationId], (err, discountResult) => {
       if (err) {
         console.error('Database query error:', err);
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      if (!appResult || appResult.length === 0) {
+      if (!discountResult || discountResult.length === 0) {
         return res.status(404).json({ message: 'Loan application not found' });
       }
 
-      const customerId = appResult[0].applicant_id;
+      const { discount, applicant_id: customerId } = discountResult[0];
+
+      // Calculate the return amount including the discount
+      const adjustedRate = interestRate - (discount || 0);
+      const returnAmount = calculateReturnAmount(loanAmount, adjustedRate);
+
+      // Calculate the start and end date
+      const startDate = moment().format('YYYY-MM-DD HH:mm:ss');
+      const endDate = moment().add(numWeeks, 'weeks').format('YYYY-MM-DD HH:mm:ss');
+
       const newLoanId = uuidv4();
       const insertValues = [
         newLoanId, customerId, handlerId, loan_type_id, loanAmount, returnAmount,
-        interestRate, startDate, endDate, numWeeks, 'pending', collateral, false
+        adjustedRate, startDate, endDate, numWeeks, 'pending', collateral, false
       ];
 
       const insertQuery = `

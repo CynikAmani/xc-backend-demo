@@ -46,6 +46,7 @@ const createTablesQueries = [
    collateral VARCHAR(200),
    num_weeks INT NOT NULL,
    location VARCHAR(100) NOT NULL,
+   discount INT DEFAULT 0,
    date_applied DATETIME DEFAULT CURRENT_TIMESTAMP,
    FOREIGN KEY (applicant_id) REFERENCES users(user_id)
 );`,
@@ -131,6 +132,7 @@ const createTablesQueries = [
     slogan VARCHAR(250),
     logo_img_name VARCHAR(400)
 );`,
+
 `CREATE TABLE IF NOT EXISTS about (
     id INT PRIMARY KEY AUTO_INCREMENT,
     brand_mission VARCHAR(1000),
@@ -140,16 +142,51 @@ const createTablesQueries = [
     contact_email VARCHAR(256),
     core_values VARCHAR(800)
 );`,
+
 `CREATE TABLE IF NOT EXISTS adverts (
     id INT PRIMARY KEY AUTO_INCREMENT,
     advert_image_name VARCHAR(255),
     advert_content TEXT
 );`,
+
 `CREATE TABLE IF NOT EXISTS brand_images (
     id INT PRIMARY KEY AUTO_INCREMENT,
     brand_image_name VARCHAR(255)
 );
-`
+`,
+
+`CREATE TABLE IF NOT EXISTS special_offers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    discount_value INT NOT NULL,
+    target_customer VARCHAR(100),
+    redeemed BOOLEAN DEFAULT false,
+    offer_date DATE NOT NULL,
+    FOREIGN KEY (target_customer) REFERENCES users(user_id)
+);`,
+
+`CREATE TABLE IF NOT EXISTS feedback_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT
+);`,
+
+`CREATE TABLE IF NOT EXISTS feedbacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(100) NOT NULL,
+    category_id INT NOT NULL,
+    feedback_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES feedback_categories(id) ON DELETE CASCADE
+);`,
+
+`CREATE TABLE IF NOT EXISTS agreement_refs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(100) NOT NULL,
+    national_id_img_name VARCHAR(300),
+    signature_data BLOB,
+    FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);`
   ];
   
   // SQL queries for inserting initial data

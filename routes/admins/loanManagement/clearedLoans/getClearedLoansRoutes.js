@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../../../config/db');
 const moment = require('moment'); // Import moment.js for date formatting
-const checkAdmin = require('../../../../auth/checkAdmin')
+const checkAdmin = require('../../../../auth/checkAdmin');
 
 // Route to get cleared loans with payment installments
 router.get('/', checkAdmin, async (req, res) => {
@@ -21,34 +21,38 @@ router.get('/', checkAdmin, async (req, res) => {
     `;
     const [loansResult] = await db.promise().query(loansQuery);
 
-    const clearedLoans = [];
+    // Fetch all payments for loans in a single query
+    const loanIds = loansResult.map(loan => loan.loan_id);
+    const paymentsQuery = `
+      SELECT 
+        p.payment_id, p.loan_id, p.amount_paid, p.date_paid, u.fullname AS handler_name
+      FROM payments p
+      JOIN users u ON p.handler_id = u.user_id
+      WHERE p.loan_id IN (?)
+      ORDER BY p.loan_id, p.date_paid ASC
+    `;
+    const [paymentsResult] = await db.promise().query(paymentsQuery, [loanIds]);
 
-    for (const loan of loansResult) {
-      // Format start_date and end_date
-      loan.start_date = moment(loan.start_date).format('YYYY-MM-DD HH:mm:ss');
-      loan.end_date = moment(loan.end_date).format('YYYY-MM-DD HH:mm:ss');
+    // Group payments by loan_id for quick lookup
+    const paymentsByLoanId = paymentsResult.reduce((acc, payment) => {
+      payment.date_paid = moment(payment.date_paid).format('YYYY-MM-DD HH:mm:ss'); // Format date_paid
+      if (!acc[payment.loan_id]) {
+        acc[payment.loan_id] = [];
+      }
+      acc[payment.loan_id].push(payment);
+      return acc;
+    }, {});
 
-      // Query to get payments with handler name for each loan, ordered by date_paid (FIFO)
-      const paymentsQuery = `
-        SELECT 
-          p.payment_id, p.loan_id, p.amount_paid, p.date_paid, u.fullname AS handler_name
-        FROM payments p
-        JOIN users u ON p.handler_id = u.user_id
-        WHERE p.loan_id = ?
-        ORDER BY p.date_paid ASC
-      `;
-      const [paymentsResult] = await db.promise().query(paymentsQuery, [loan.loan_id]);
+    // Build the response
+    const clearedLoans = loansResult.map(loan => {
+      loan.start_date = moment(loan.start_date).format('YYYY-MM-DD HH:mm:ss'); // Format start_date
+      loan.end_date = moment(loan.end_date).format('YYYY-MM-DD HH:mm:ss');     // Format end_date
 
-      // Format date_paid for each payment
-      paymentsResult.forEach(payment => {
-        payment.date_paid = moment(payment.date_paid).format('YYYY-MM-DD HH:mm:ss');
-      });
-
-      clearedLoans.push({
+      return {
         loanDetails: loan,
-        payments: paymentsResult,
-      });
-    }
+        payments: paymentsByLoanId[loan.loan_id] || [], // Attach payments or empty array if none
+      };
+    });
 
     res.status(200).json(clearedLoans);
   } catch (error) {

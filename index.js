@@ -98,6 +98,18 @@ const getBrandImagesRoutes = require('./routes/admins/configurations/adverts/get
 const deleteBrandImageRoutes = require('./routes/admins/configurations/adverts/deleteBrandImageRoutes.js');
 const resetInterestRatesRoutes = require('./routes/admins/configurations/promotions/resetInterestRatesRoutes.js');
 const setDiscountRateRoutes = require('./routes/admins/configurations/promotions/setDiscountRateRoutes.js');
+const setSpecialOfferRoutes = require('./routes/admins/configurations/offers/setSpecialOfferRoutes.js');
+const getSpecialOffersRoutes = require('./routes/admins/configurations/offers/getSpecialOffersRoutes.js');
+const getCustomerSpecialOffersRoutes = require('./routes/admins/configurations/offers/getCustomerSpecialOffersRoutes.js');
+const saveFeedbackCategoryRoutes = require('./routes/admins/configurations/feedbacks/saveFeedbackCategoryRoutes.js');
+const getFeedbackCategoriesRoutes = require('./routes/admins/configurations/feedbacks/getFeedbackCategoriesRoutes.js');
+const saveCustomerFeedbackRoutes = require('./routes/admins/configurations/feedbacks/saveCustomerFeedbackRoutes.js');
+const getCustomerFeedbacksRoutes = require('./routes/admins/configurations/feedbacks/getCustomerFeedbacksRoutes.js');
+const getInsightsRoutes = require('./routes/admins/dashboard/getInsightsRoutes.js');
+const setAgreementRefsRoutes = require('./routes/generics/setAgreementRefsRoutes.js');
+const getAgreementInfoRoutes = require('./routes/customers/loans/loanApplications/getAgreementInfoRoutes.js');
+
+
 
 
 
@@ -168,6 +180,19 @@ app.use('/api/getBrandImagesRoutes', getBrandImagesRoutes);
 app.use('/api/deleteBrandImage', deleteBrandImageRoutes);
 app.use('/api/resetInterestRates', resetInterestRatesRoutes);
 app.use('/api/setDiscountRate', setDiscountRateRoutes);
+app.use('/api/setSpecialOffer', setSpecialOfferRoutes);
+app.use('/api/getSpecialOffers', getSpecialOffersRoutes);
+app.use('/api/getCustomerSpecialOffers', getCustomerSpecialOffersRoutes);
+app.use('/api/saveFeedbackCategory', saveFeedbackCategoryRoutes);
+app.use('/api/getFeedbackCategories', getFeedbackCategoriesRoutes);
+app.use('/api/saveCustomerFeedback', saveCustomerFeedbackRoutes);
+app.use('/api/getCustomerFeedbacks', getCustomerFeedbacksRoutes);
+app.use('/api/getInsights', getInsightsRoutes);
+app.use('/api/setAgreementRefs', setAgreementRefsRoutes);
+app.use('/api/getAgreementInfo', getAgreementInfoRoutes);
+
+
+
 
 
 

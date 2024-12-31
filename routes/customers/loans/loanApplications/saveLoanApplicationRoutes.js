@@ -6,7 +6,7 @@ const checkSession = require('../../../../auth/checkSession');
 
 // Insert or update loan application
 router.post('/', checkSession, (req, res) => {
-  const { loanApplicationId, loanAmount, collateral, numWeeks, location } = req.body;
+  const { loanApplicationId, loanAmount, collateral, numWeeks, location, offerId, discount } = req.body;
   const { userId } = req.session;
 
   if (!loanAmount || !collateral || !numWeeks || !location) {
@@ -86,18 +86,38 @@ router.post('/', checkSession, (req, res) => {
         handleResponse(loanApplicationId);
       });
     } else {
-      // Insert new loan application
+      // Insert new loan application (with discount if applicable)
       const insertQuery = `
-        INSERT INTO loan_applications (applicant_id, loan_amount, collateral, num_weeks, location, date_applied)
-        VALUES (?, ?, ?, ?, ?, ?)`;
-      const insertValues = [userId, loanAmount, collateral, numWeeks, location, moment().format('YYYY-MM-DD HH:mm:ss')];
+        INSERT INTO loan_applications (applicant_id, loan_amount, collateral, num_weeks, location, discount, date_applied)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      const insertValues = [userId, loanAmount, collateral, numWeeks, location, discount || 0, moment().format('YYYY-MM-DD HH:mm:ss')];
 
       db.query(insertQuery, insertValues, (err, result) => {
         if (err) {
           console.error('Database insertion error:', err);
           return res.status(500).json({ message: 'Internal server error' });
         }
-        handleResponse(result.insertId);
+
+        const newLoanApplicationId = result.insertId;
+
+        // If offerId is provided, mark the offer as redeemed
+        if (offerId) {
+          const redeemOfferQuery = `
+            UPDATE special_offers 
+            SET redeemed = true 
+            WHERE id = ? AND target_customer = ?`;
+          db.query(redeemOfferQuery, [offerId, userId], (err, redeemResult) => {
+            if (err) {
+              console.error('Error marking offer as redeemed:', err);
+              return res.status(500).json({ message: 'Failed to redeem the special offer.' });
+            }
+            if (redeemResult.affectedRows === 0) {
+              console.warn('No matching offer found to mark as redeemed.');
+            }
+          });
+        }
+
+        handleResponse(newLoanApplicationId);
       });
     }
   });
