@@ -107,8 +107,9 @@ const saveCustomerFeedbackRoutes = require('./routes/admins/configurations/feedb
 const getCustomerFeedbacksRoutes = require('./routes/admins/configurations/feedbacks/getCustomerFeedbacksRoutes.js');
 const getInsightsRoutes = require('./routes/admins/dashboard/getInsightsRoutes.js');
 const setAgreementRefsRoutes = require('./routes/generics/setAgreementRefsRoutes.js');
+const getAgreementRefsRoutes = require('./routes/generics/getAgreementRefsRoutes.js');
 const getAgreementInfoRoutes = require('./routes/customers/loans/loanApplications/getAgreementInfoRoutes.js');
-
+const getApplicantAgreementInfoRoutes = require('./routes/admins/loanManagement/loanApplications/getApplicantAgreementInfoRoutes.js');
 
 
 
@@ -189,7 +190,9 @@ app.use('/api/saveCustomerFeedback', saveCustomerFeedbackRoutes);
 app.use('/api/getCustomerFeedbacks', getCustomerFeedbacksRoutes);
 app.use('/api/getInsights', getInsightsRoutes);
 app.use('/api/setAgreementRefs', setAgreementRefsRoutes);
+app.use('/api/getAgreementRefs', getAgreementRefsRoutes);
 app.use('/api/getAgreementInfo', getAgreementInfoRoutes);
+app.use('/api/getApplicantAgreementInfo', getApplicantAgreementInfoRoutes);
 
 
 
