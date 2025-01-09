@@ -21,7 +21,8 @@ router.get('/', checkAdmin, (req, res) => {
       u.fullname AS applicant_name,
       u.phone AS applicant_phone,
       u.email AS applicant_email,
-      (SELECT COUNT(*) FROM loans WHERE customer_id = la.applicant_id) AS pastLoans
+      (SELECT COUNT(*) FROM loans WHERE customer_id = la.applicant_id) AS pastLoans,
+      EXISTS (SELECT 1 FROM agreement_refs ar WHERE ar.user_id = u.user_id) AS userSignedAgreementForm
     FROM loan_applications la
     JOIN interest_rates ir ON la.num_weeks = ir.num_weeks
     JOIN loan_types lt ON ir.loan_type_id = lt.loan_type_id
@@ -62,6 +63,7 @@ router.get('/', checkAdmin, (req, res) => {
         applicantEmail: row.applicant_email,
         pastLoans: row.pastLoans,
         timeElapsed: timeElapsed,
+        userSignedAgreementForm: row.userSignedAgreementForm === 1, // Convert to boolean
       };
     });
 
