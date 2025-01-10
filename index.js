@@ -64,6 +64,7 @@ const getUnclearedLoansRoutes = require('./routes/admins/loanManagement/newLoans
 const getOverdueLoansRoutes = require('./routes/admins/loanManagement/newLoans/getOverdueLoansRoutes.js');
 const deleteLoanRoutes = require('./routes/admins/loanManagement/newLoans/deleteLoanRoutes.js');
 const loanRepaymentsRoutes = require('./routes/admins/loanManagement/loanRepayments/loanRepaymentsRoutes.js');
+const renewLoanRoutes = require('./routes/admins/loanManagement/loanRepayments/renewLoanRoutes.js');
 const getLoanBalanceRoutes = require('./routes/admins/loanManagement/loanRepayments/getLoanBalanceRoutes.js');
 const getClearedLoansRoutes = require('./routes/admins/loanManagement/clearedLoans/getClearedLoansRoutes.js');
 const saveLoanApplicationRoutes = require('./routes/customers/loans/loanApplications/saveLoanApplicationRoutes.js');
@@ -147,6 +148,7 @@ app.use('/api/getUnclearedLoans', getUnclearedLoansRoutes);
 app.use('/api/getOverdueLoans', getOverdueLoansRoutes);
 app.use('/api/deleteLoan', deleteLoanRoutes);
 app.use('/api/loanRepayments', loanRepaymentsRoutes);
+app.use('/api/renewLoan', renewLoanRoutes);
 app.use('/api/getLoanBalance', getLoanBalanceRoutes);
 app.use('/api/getClearedLoans', getClearedLoansRoutes);
 app.use('/api/saveLoanApplication', saveLoanApplicationRoutes);

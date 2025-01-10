@@ -4,7 +4,6 @@ const db = require('../../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 const checkAdmin = require('../../../../auth/checkAdmin');
-const { sendSMS } = require('../../../../config/twilioService');
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', {
@@ -95,10 +94,13 @@ router.post('/', checkAdmin, (req, res) => {
             const { start_date } = loanResult[0];
             const updatedEndDate = moment(start_date).add(numWeeks, 'weeks').format('YYYY-MM-DD HH:mm:ss');
 
-            const updateValues = [loanAmount, returnAmount, interestRate, updatedEndDate, collateral, numWeeks, loanId];
+            // Set the loan status to 'Active' if the end date is greater than now
+            const status = moment(updatedEndDate).isAfter(moment()) ? 'Active' : 'Pending';
+
+            const updateValues = [loanAmount, returnAmount, interestRate, updatedEndDate, collateral, numWeeks, status, loanId];
             const updateQuery = `
               UPDATE loans
-              SET loan_amount = ?, return_amount = ?, interest_rate = ?, end_date = ?, collateral = ?, num_weeks = ?
+              SET loan_amount = ?, return_amount = ?, interest_rate = ?, end_date = ?, collateral = ?, num_weeks = ?, status = ?
               WHERE loan_id = ?
             `;
             db.query(updateQuery, updateValues, (err) => {
@@ -112,7 +114,6 @@ router.post('/', checkAdmin, (req, res) => {
 
               // Handle notifications and SMS asynchronously
               handleNotifications(customerId, customerPhone, fullname, 'updated', req, loanAmount, handlerFullname);
-              handleSMS(customerPhone, fullname, 'updated', loanAmount, handlerFullname);
             });
           });
         } else {
@@ -193,30 +194,6 @@ function handleNotifications(customerId, customerPhone, fullname, action, req, l
         console.error('Database insertion error:', err);
       }
     });
-  });
-}
-
-// Helper function to handle SMS sending
-function handleSMS(customerPhone, fullname, action, loanAmount, handlerFullname) {
-  // Send SMS to customer
-  const customerSMS = `Dear ${fullname}, your loan has been ${action}. The loan amount is ${formatCurrency(loanAmount)}. Congratulations.`;
-  sendSMS(`+${customerPhone}`, customerSMS)
-    .catch(err => console.error('Failed to send SMS to customer:', err));
-
-  // Fetch root admin phone for SMS
-  const rootAdminQuery = "SELECT phone FROM users WHERE user_type LIKE '%root%'";
-  db.query(rootAdminQuery, (err, rootAdminResult) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return;
-    }
-
-    const rootAdmin = rootAdminResult[0];
-    if (rootAdmin && rootAdmin.phone) {
-      const rootAdminSMS = `A loan for ${fullname} has been ${action} by ${handlerFullname}. Amount: ${formatCurrency(loanAmount)}.`;
-      sendSMS(`+${rootAdmin.phone}`, rootAdminSMS)
-        .catch(err => console.error('Failed to send SMS to root admin:', err));
-    }
   });
 }
 

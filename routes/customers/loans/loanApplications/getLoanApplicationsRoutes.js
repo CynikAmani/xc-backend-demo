@@ -16,6 +16,7 @@ router.get('/', checkSession, (req, res) => {
       la.num_weeks,
       la.date_applied,
       la.discount,
+      la.location,
       lt.type_name AS loan_type,
       ir.normal_rate AS interest_rate
     FROM loan_applications la
@@ -38,6 +39,7 @@ router.get('/', checkSession, (req, res) => {
       dateApplied: row.date_applied,
       discount: row.discount,
       loanType: row.loan_type,
+      location: row.location,
       interestRate: row.interest_rate,
     }));
 
