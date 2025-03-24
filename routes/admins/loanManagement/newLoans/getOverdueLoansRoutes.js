@@ -75,11 +75,11 @@ router.get('/', checkAdmin, (req, res) => {
         const endDate = moment(loan.endDate);
         const currentDate = moment();
 
-        // Calculate overdue time
+        // Calculate overdue time correctly
         const overdueDuration = moment.duration(currentDate.diff(endDate));
-        const daysOverdue = Math.max(overdueDuration.days(), 0);
-        const hoursOverdue = Math.max(overdueDuration.hours(), 0);
-        const minutesOverdue = Math.max(overdueDuration.minutes(), 0);
+        const daysOverdue = Math.floor(overdueDuration.asDays());
+        const hoursOverdue = Math.floor(overdueDuration.asHours()) % 24;
+        const minutesOverdue = Math.floor(overdueDuration.asMinutes()) % 60;
 
         return {
           loanId: loan.loanId,
