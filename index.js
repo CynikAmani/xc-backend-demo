@@ -111,8 +111,9 @@ const setAgreementRefsRoutes = require('./routes/generics/setAgreementRefsRoutes
 const getAgreementRefsRoutes = require('./routes/generics/getAgreementRefsRoutes.js');
 const getAgreementInfoRoutes = require('./routes/customers/loans/loanApplications/getAgreementInfoRoutes.js');
 const getApplicantAgreementInfoRoutes = require('./routes/admins/loanManagement/loanApplications/getApplicantAgreementInfoRoutes.js');
-
-
+const getDistrictsRoutes = require('./routes/generics/getDistrictsRoutes.js')
+const setResidentialDistrictRoutes = require('./routes/customers/dashboard/setResidentialDistrictRoutes.js')
+const getDashboardAnalysisRoutes = require('./routes/admins/dashboard/getDashboardAnalysisRoutes.js');
 
 
 
@@ -195,7 +196,9 @@ app.use('/api/setAgreementRefs', setAgreementRefsRoutes);
 app.use('/api/getAgreementRefs', getAgreementRefsRoutes);
 app.use('/api/getAgreementInfo', getAgreementInfoRoutes);
 app.use('/api/getApplicantAgreementInfo', getApplicantAgreementInfoRoutes);
-
+app.use('/api/getDistricts', getDistrictsRoutes);
+app.use('/api/setResidentialDistrict', setResidentialDistrictRoutes); 
+app.use('/api/getDashboardAnalysis', getDashboardAnalysisRoutes); 
 
 
 

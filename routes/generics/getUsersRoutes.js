@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../config/db');
-checkAdmin = require('../../auth/checkAdmin')
-
+checkAdmin = require('../../auth/checkAdmin');
 
 router.get('/', checkAdmin, (req, res) => {
   const loggedInUserId = req.session.userId;
@@ -18,8 +17,10 @@ router.get('/', checkAdmin, (req, res) => {
       email,
       gender_id,
       is_blocked,
-      dp
+      dp,
+      districts.district_name AS district
     FROM users
+    LEFT JOIN districts ON users.district_id = districts.id
     WHERE user_id != ?
   `;
 
@@ -39,7 +40,8 @@ router.get('/', checkAdmin, (req, res) => {
       phone: row.phone,
       email: row.email,
       isBlocked: row.is_blocked,
-      dp: row.dp
+      dp: row.dp,
+      district: row.district || null  // if no district, return null
     }));
 
     res.status(200).json(users);

@@ -186,24 +186,58 @@ const createTablesQueries = [
     national_id_img_name VARCHAR(300),
     signature_data BLOB,
     FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);`,
+`CREATE TABLE IF NOT EXISTS districts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    district_name VARCHAR(64) NOT NULL 
 );`
   ];
   
   // SQL queries for inserting initial data
   const insertInitialDataQueries = [
     `INSERT INTO messages (message_type, target_user, message)
-VALUES 
-('LOAN_CREATION', 'admin', 'Message for loan creation for admin'),
-('LOAN_CREATION', 'customer', 'Message for loan creation for customer'),
-('LOAN_REMINDER_(NORMAL)', 'admin', 'Normal loan reminder for admin'),
-('LOAN_REMINDER_(NORMAL)', 'customer', 'Normal loan reminder for customer'),
-('LOAN_REMINDER_ON_DUE_DATE', 'admin', 'Due date loan reminder for admin'),
-('LOAN_REMINDER_ON_DUE_DATE', 'customer', 'Due date loan reminder for customer'),
-('LOAN_REMINDER_(OVERDUE)', 'admin', 'Overdue loan reminder for admin'),
-('LOAN_REMINDER_(OVERDUE)', 'customer', 'Overdue loan reminder for customer');
-`,
+    VALUES 
+    ('LOAN_CREATION', 'admin', 'Message for loan creation for admin'),
+    ('LOAN_CREATION', 'customer', 'Message for loan creation for customer'),
+    ('LOAN_REMINDER_(NORMAL)', 'admin', 'Normal loan reminder for admin'),
+    ('LOAN_REMINDER_(NORMAL)', 'customer', 'Normal loan reminder for customer'),
+    ('LOAN_REMINDER_ON_DUE_DATE', 'admin', 'Due date loan reminder for admin'),
+    ('LOAN_REMINDER_ON_DUE_DATE', 'customer', 'Due date loan reminder for customer'),
+    ('LOAN_REMINDER_(OVERDUE)', 'admin', 'Overdue loan reminder for admin'),
+    ('LOAN_REMINDER_(OVERDUE)', 'customer', 'Overdue loan reminder for customer');
+    `,
   
-    `INSERT INTO genders (gender) VALUES ('Male'), ('Female'), ('Other');`
+    `INSERT INTO genders (gender) VALUES ('Male'), ('Female'), ('Other');`,
+    `INSERT INTO districts (district_name) VALUES
+     ('Balaka'),
+     ('Blantyre'),
+     ('Chikwawa'),
+     ('Chiradzulu'),
+     ('Chitipa'),
+     ('Dedza'),
+     ('Dowa'),
+     ('Karonga'),
+     ('Kasungu'),
+     ('Likoma'),
+     ('Lilongwe'),
+     ('Machinga'),
+     ('Mangochi'),
+     ('Mchinji'),
+     ('Mulanje'),
+     ('Mwanza'),
+     ('Mzimba'),
+     ('Neno'),
+     ('Nkhata Bay'),
+     ('Nkhotakota'),
+     ('Nsanje'),
+     ('Ntcheu'),
+     ('Ntchisi'),
+     ('Phalombe'),
+     ('Rumphi'),
+     ('Salima'),
+     ('Thyolo'),
+     ('Zomba');
+    `
   ];
   
   module.exports = { createTablesQueries, insertInitialDataQueries };

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../../../config/db');
 
+
 // Route to get system attributes and total users
 router.get('/', (req, res) => {
     const systemQuery = `SELECT system_name, slogan, logo_img_name FROM system_info LIMIT 1`;

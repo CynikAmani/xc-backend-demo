@@ -15,13 +15,16 @@ router.get('/', checkSession, (req, res) => {
             u.fullname,
             u.gender_id AS genderId,
             g.gender AS gender, 
+            u.district_id AS districtId,
+            d.district_name AS districtName, 
             u.national_id AS nationalId,
             u.phone,
             u.email,
             u.is_blocked AS isBlocked,
             u.dp
         FROM users u
-        LEFT JOIN genders g ON u.gender_id = g.gender_id  -- Join with genders table
+        LEFT JOIN genders g ON u.gender_id = g.gender_id 
+        LEFT JOIN districts d ON u.district_id = d.id
         WHERE u.user_id = ?
     `;
 

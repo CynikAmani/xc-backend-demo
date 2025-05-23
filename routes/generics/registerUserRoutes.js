@@ -5,10 +5,10 @@ const bcrypt = require('bcrypt');
 
 // Route to register a new user
 router.post('/', async (req, res) => {
-  const { fullname, genderId, nationalIdNumber, phone, email, username, password, userType, formTriggered } = req.body;
+  const { fullname, genderId, districtId, nationalIdNumber, phone, email, username, password, userType, formTriggered } = req.body;
 
   // Validate the input
-  if (!fullname || !genderId || !nationalIdNumber || !phone || !email || !username || !password || !userType) {
+  if (!fullname || !genderId || !districtId || !nationalIdNumber || !phone || !email || !username || !password || !userType) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
       // Encrypt the password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert the new user into the database
+      // Insert the new user into the database, including district_id
       const newUser = {
         user_id: username,
         password: hashedPassword,
@@ -36,7 +36,8 @@ router.post('/', async (req, res) => {
         gender_id: genderId,
         national_id: nationalIdNumber,
         phone,
-        email
+        email,
+        district_id: districtId 
       };
 
       db.query('INSERT INTO users SET ?', newUser, (err, result) => {
@@ -54,13 +55,13 @@ router.post('/', async (req, res) => {
           }
 
           if (!formTriggered) {
-            // Set the session
+            // Set the session, user is creating their account
             req.session.userId = username;
 
             // Respond with success message
             res.status(201).json({ message: 'User registered and logged in successfully' });
           } else {
-            // Respond with success message without setting session
+            // Respond with success message without setting session, admin is creating accouunt for the user
             res.status(201).json({ message: 'User registered successfully' });
           }
         });

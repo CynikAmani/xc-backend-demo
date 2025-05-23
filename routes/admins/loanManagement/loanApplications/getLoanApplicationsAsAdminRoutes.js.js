@@ -21,12 +21,14 @@ router.get('/', checkAdmin, (req, res) => {
       u.fullname AS applicant_name,
       u.phone AS applicant_phone,
       u.email AS applicant_email,
+      d.district_name AS applicant_district, -- added this line
       (SELECT COUNT(*) FROM loans WHERE customer_id = la.applicant_id) AS pastLoans,
       EXISTS (SELECT 1 FROM agreement_refs ar WHERE ar.user_id = u.user_id) AS userSignedAgreementForm
     FROM loan_applications la
     JOIN interest_rates ir ON la.num_weeks = ir.num_weeks
     JOIN loan_types lt ON ir.loan_type_id = lt.loan_type_id
     JOIN users u ON la.applicant_id = u.user_id
+    LEFT JOIN districts d ON u.district_id = d.id -- added this JOIN
     ORDER BY la.date_applied DESC
   `;
 
@@ -61,6 +63,7 @@ router.get('/', checkAdmin, (req, res) => {
         applicantName: row.applicant_name,
         applicantPhone: row.applicant_phone,
         applicantEmail: row.applicant_email,
+        applicantDistrict: row.applicant_district, 
         pastLoans: row.pastLoans,
         timeElapsed: timeElapsed,
         userSignedAgreementForm: row.userSignedAgreementForm === 1, // Convert to boolean
