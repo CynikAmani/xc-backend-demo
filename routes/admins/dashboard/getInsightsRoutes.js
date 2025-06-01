@@ -31,13 +31,22 @@ router.post('/', checkAdmin, (req, res) => {
       GROUP BY MONTH(start_date)
       ORDER BY MONTH(start_date);
     `,
+    annual_amount: `
+      SELECT 
+        MONTHNAME(start_date) AS month, 
+        SUM(loan_amount) AS total_disbursed
+      FROM loans
+      WHERE YEAR(start_date) = ?
+      GROUP BY MONTH(start_date)
+      ORDER BY MONTH(start_date);
+    `
   };
 
-  // Execute both queries concurrently with the selected parameters
+  // Execute all queries concurrently with the selected parameters
   const promises = Object.keys(queries).map((key) =>
     new Promise((resolve, reject) => {
       const query = queries[key];
-      const params = key === 'monthly' ? [month, year] : [year]; // Monthly query uses month and year; Annual query uses only year
+      const params = key === 'monthly' ? [month, year] : [year]; // All annual queries use only year
 
       db.query(query, params, (err, results) => {
         if (err) reject(err);
@@ -46,7 +55,7 @@ router.post('/', checkAdmin, (req, res) => {
     })
   );
 
-  // Combine results and send response as in the original format
+  // Combine results and send response
   Promise.all(promises)
     .then((data) => {
       // Combine results into a single response object
@@ -57,7 +66,7 @@ router.post('/', checkAdmin, (req, res) => {
 
       res.status(200).json({
         message: 'Loan performance data retrieved successfully.',
-        data: response, // This matches the original format
+        data: response,
       });
     })
     .catch((err) => {
