@@ -28,6 +28,7 @@ router.post('/', (req, res) => {
     try {
       const isMatch = await bcrypt.compare(password, user.password);
       if (isMatch) {
+        
         // User authenticated successfully, set the session
         req.session.userId = userId;
         res.status(200).json({ message: 'Login successful' });

@@ -1,0 +1,9 @@
+DB_HOST=xander-final.c10ou0yeo4hr.us-east-1.rds.amazonaws.com
+DB_USER=xander_root
+DB_PASSWORD=Silindil3sith3mbil3
+DB_NAME=xandercreditors
+
+
+
+mysql -h xander-final.c10ou0yeo4hr.us-east-1.rds.amazonaws.com -u xander_root -p -D xandercreditors
+use xandercreditors

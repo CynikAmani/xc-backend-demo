@@ -5,28 +5,36 @@ const createTablesQueries = [
      gender_id INT AUTO_INCREMENT PRIMARY KEY,
     gender VARCHAR(50) NOT NULL
       );`,
-  
+
+     `CREATE TABLE IF NOT EXISTS districts (
+         id INT PRIMARY KEY AUTO_INCREMENT,
+         district_name VARCHAR(64) NOT NULL 
+     );`,
+   
     // Create the users table
     `CREATE TABLE IF NOT EXISTS users (
-    user_id VARCHAR(100) PRIMARY KEY,
-    password VARCHAR(500) NOT NULL,
-    user_type VARCHAR(20) NOT NULL,
-    fullname VARCHAR(100) NOT NULL,
-    gender_id INT,
-    national_id VARCHAR(255) NOT NULL,
-    phone VARCHAR(14),
-    email VARCHAR(100),
-    is_blocked BOOLEAN DEFAULT false,
-    dp VARCHAR(100) DEFAULT NULL,
-    FOREIGN KEY (gender_id) REFERENCES genders(gender_id)
-);`,
-  
+       user_id VARCHAR(100) PRIMARY KEY,
+       password VARCHAR(500) NOT NULL,
+       user_type VARCHAR(20) NOT NULL,
+       fullname VARCHAR(100) NOT NULL, 
+       gender_id INT,
+       national_id VARCHAR(255) NOT NULL,
+       phone VARCHAR(14),
+       email VARCHAR(100),
+       district_id INT,
+       is_blocked BOOLEAN DEFAULT false,
+       dp VARCHAR(100) DEFAULT NULL,
+       FOREIGN KEY (gender_id) REFERENCES genders(gender_id),
+       FOREIGN KEY (district_id) REFERENCES districts(id) ON DELETE CASCADE ON UPDATE CASCADE
+   );`,
+     
     // Create the notifications table
     `CREATE TABLE IF NOT EXISTS notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     notification_type VARCHAR(50) NOT NULL,
     target_user VARCHAR(50) NOT NULL,
     content TEXT,
+    is_viewed BOOLEAN DEFAULT false,
     date DATETIME NOT NULL
 );`,
   
@@ -94,7 +102,7 @@ const createTablesQueries = [
     loan_type_id INT NOT NULL,
     num_weeks INT NOT NULL,
     normal_rate INT NOT NULL,
-    overdue_rate INT NOT NULL,  -- Fixed typo here
+    standard_rate INT NOT NULL,
     FOREIGN KEY(loan_type_id) REFERENCES loan_types(loan_type_id)
 );`,
   
@@ -175,9 +183,21 @@ const createTablesQueries = [
     user_id VARCHAR(100) NOT NULL,
     category_id INT NOT NULL,
     feedback_text TEXT NOT NULL,
+    is_seen BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES feedback_categories(id) ON DELETE CASCADE
+);`,
+
+`CREATE TABLE IF NOT EXISTS feedback_chats (
+    feedback_id INT NOT NULL,
+    chat_text_id INT AUTO_INCREMENT PRIMARY KEY,
+    chat_text VARCHAR(800),
+    is_new_reply BOOLEAN DEFAULT TRUE,
+    date_replied DATETIME DEFAULT CURRENT_TIMESTAMP,
+    sender_id VARCHAR(100) NOT NULL,
+    FOREIGN KEY (feedback_id) REFERENCES feedbacks(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE
 );`,
 
 `CREATE TABLE IF NOT EXISTS agreement_refs (
@@ -186,10 +206,6 @@ const createTablesQueries = [
     national_id_img_name VARCHAR(300),
     signature_data BLOB,
     FOREIGN KEY(user_id) REFERENCES users (user_id) ON DELETE CASCADE
-);`,
-`CREATE TABLE IF NOT EXISTS districts (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    district_name VARCHAR(64) NOT NULL 
 );`
   ];
   

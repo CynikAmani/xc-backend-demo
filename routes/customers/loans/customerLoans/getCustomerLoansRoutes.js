@@ -4,7 +4,7 @@ const db = require('../../../../config/db');
 const checkSession = require('../../../../auth/checkSession');
 const moment = require('moment');
 
-// Route to get customer's loans with balance calculation
+// Route to get customer's loans with balance calculation and payment installments
 router.get('/', checkSession, (req, res) => {
   const { userId } = req.session;
 
@@ -30,14 +30,12 @@ router.get('/', checkSession, (req, res) => {
       return res.status(500).json({ message: 'Internal server error' });
     }
 
-    // Get loan IDs for balance calculation
     const loanIds = loanResults.map(loan => loan.loanId);
 
     if (loanIds.length === 0) {
       return res.status(200).json([]);
     }
 
-    // Query to fetch total repayments for each loan
     const repaymentQuery = `
       SELECT
         loan_id AS loanId,
@@ -53,59 +51,78 @@ router.get('/', checkSession, (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      // Map repayments to loanId for easy lookup
       const repaymentMap = repaymentResults.reduce((acc, repayment) => {
         acc[repayment.loanId] = repayment.totalRepayment;
         return acc;
       }, {});
 
-      // Calculate the balance and timeRemaining or elapsedSinceDue for each loan
-      const formattedLoans = loanResults.map(loan => {
-        const totalRepayment = repaymentMap[loan.loanId] || 0;
-        const balance = loan.returnAmount - totalRepayment;
+      // Fetch all installments per loan
+      const paymentsQuery = `
+        SELECT 
+          p.payment_id, p.loan_id AS loanId, p.amount_paid, p.date_paid, u.fullname AS handler_name
+        FROM payments p
+        JOIN users u ON p.handler_id = u.user_id
+        WHERE p.loan_id IN (?)
+        ORDER BY p.loan_id, p.date_paid ASC
+      `;
 
-        // Calculate duration between endDate and current date
-        let duration = moment.duration(moment(loan.endDate).diff(moment()));
-
-        // Initialize timeRemaining and elapsedSinceDue
-        let timeRemaining = null;
-        let elapsedSinceDue = null;
-
-        if (duration.asMilliseconds() >= 0) {
-          // Loan is not overdue: Calculate time remaining
-          timeRemaining = {
-            days: Math.max(duration.days(), 0),
-            hours: Math.max(duration.hours(), 0),
-            minutes: Math.max(duration.minutes(), 0),
-          };
-        } else {
-          // Loan is overdue: Calculate elapsed time since due date
-          duration = moment.duration(moment().diff(moment(loan.endDate)));
-          elapsedSinceDue = {
-            days: duration.days(),
-            hours: duration.hours(),
-            minutes: duration.minutes(),
-          };
+      db.query(paymentsQuery, [loanIds], (err, paymentsResult) => {
+        if (err) {
+          console.error('Error fetching payments:', err);
+          return res.status(500).json({ message: 'Failed to fetch installments.' });
         }
 
-        return {
-          loanId: loan.loanId,
-          loanAmount: loan.loanAmount,
-          numWeeks: loan.numWeeks,
-          interestRate: loan.interestRate,
-          returnAmount: loan.returnAmount,
-          amountPaid: totalRepayment,
-          balance: balance,
-          collateral: loan.collateral,
-          startDate: loan.startDate,
-          endDate: loan.endDate,
-          timeRemaining: timeRemaining,         // Null if overdue
-          elapsedSinceDue: elapsedSinceDue,     // Null if not overdue
-          status: loan.status
-        };
-      });
+        const paymentsByLoanId = paymentsResult.reduce((acc, payment) => {
+          payment.date_paid = moment(payment.date_paid).format('YYYY-MM-DD HH:mm:ss');
+          if (!acc[payment.loanId]) acc[payment.loanId] = [];
+          acc[payment.loanId].push(payment);
+          return acc;
+        }, {});
 
-      res.status(200).json(formattedLoans);
+        // Construct final response
+        const formattedLoans = loanResults.map(loan => {
+          const totalRepayment = repaymentMap[loan.loanId] || 0;
+          const balance = loan.returnAmount - totalRepayment;
+
+          let duration = moment.duration(moment(loan.endDate).diff(moment()));
+          let timeRemaining = null;
+          let elapsedSinceDue = null;
+
+          if (duration.asMilliseconds() >= 0) {
+            timeRemaining = {
+              days: Math.max(duration.days(), 0),
+              hours: Math.max(duration.hours(), 0),
+              minutes: Math.max(duration.minutes(), 0),
+            };
+          } else {
+            duration = moment.duration(moment().diff(moment(loan.endDate)));
+            elapsedSinceDue = {
+              days: duration.days(),
+              hours: duration.hours(),
+              minutes: duration.minutes(),
+            };
+          }
+
+          return {
+            loanId: loan.loanId,
+            loanAmount: loan.loanAmount,
+            numWeeks: loan.numWeeks,
+            interestRate: loan.interestRate,
+            returnAmount: loan.returnAmount,
+            amountPaid: totalRepayment,
+            balance: balance,
+            collateral: loan.collateral,
+            startDate: loan.startDate,
+            endDate: loan.endDate,
+            timeRemaining,
+            elapsedSinceDue,
+            status: loan.status,
+            payments: paymentsByLoanId[loan.loanId] || [],
+          };
+        });
+
+        res.status(200).json(formattedLoans);
+      });
     });
   });
 });

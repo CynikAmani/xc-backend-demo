@@ -1,13 +1,12 @@
+const { db, dbInitialized } = require('./config/db.js');
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron'); //scheduler 
-require('./routes/admins/configurations/messeges/updateLoanStatusOnScheduleRoutes.js');
 
 const deleteAllBrandImages = require('./routes/generics/deleteBrandImagesRoutes.js');
-deleteAllBrandImages();
 
 dotenv.config();
 
@@ -116,6 +115,14 @@ const setResidentialDistrictRoutes = require('./routes/customers/dashboard/setRe
 const getDashboardAnalysisRoutes = require('./routes/admins/dashboard/getDashboardAnalysisRoutes.js');
 
 
+const setFeedbackReplyRoutes = require('./routes/generics/feedbackReplies/addFeedbackReplyRoutes.js');
+const getUserFeedbackRoutes = require('./routes/customers/feedbacks/getUserFeedbackRoutes.js');
+const getNumNewFeedbackRepliesRoutes = require('./routes/customers/feedbacks/getNumNewFeedbackRepliesRoutes.js');
+const markFeedbackRepliesAsReadRoutes = require('./routes/generics/feedbackReplies/markFeedbackRepliesAsReadRoutes.js');
+const getAdminNumNewFeedbackRepliesRoutes = require('./routes/admins/configurations/feedbacks/getAdminNumNewFeedbackRepliesRoutes.js');
+const markCustomerFeedbacksAndRepliesAsReadRoutes = require('./routes/admins/configurations/feedbacks/markCustomerFeedbacksAndRepliesAsReadRoutes.js');
+
+
 
 // Use Routes
 app.use('/api', test);
@@ -200,6 +207,15 @@ app.use('/api/getDistricts', getDistrictsRoutes);
 app.use('/api/setResidentialDistrict', setResidentialDistrictRoutes); 
 app.use('/api/getDashboardAnalysis', getDashboardAnalysisRoutes); 
 
+app.use('/api/setFeedbackReply', setFeedbackReplyRoutes);
+app.use('/api/getUserFeedbacks', getUserFeedbackRoutes);
+app.use('/api/getNumNewFeedbackReplies', getNumNewFeedbackRepliesRoutes);
+app.use('/api/markFeedbackRepliesAsRead', markFeedbackRepliesAsReadRoutes);
+app.use('/api/getAdminNumNewFeedbackReplies', getAdminNumNewFeedbackRepliesRoutes);
+app.use('/api/markCustomerFeedbacksAndRepliesAsRead', markCustomerFeedbacksAndRepliesAsReadRoutes);
+
+//setFeedbackReplyRoutes
+
 
 
 
@@ -222,4 +238,14 @@ app.use((req, res) => {
 
 // Define Port
 const PORT = process.env.PORT || 9999;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Wait for DB initialization before starting server
+dbInitialized.then(() => {
+  require('./routes/admins/configurations/messeges/updateLoanStatusOnScheduleRoutes.js');  // Schedule loan reminders
+  deleteAllBrandImages(); // Delete all brand images on server start | this is due to render isssues with their disks when server restarts it loses data and so image names also need to be deleted
+  const PORT = process.env.PORT || 9999;
+  app.listen(PORT, () => console.log(`Server now ready to serve, running on port ${PORT}`));
+}).catch(err => {
+  console.error("Database initialization failed:", err);
+  process.exit(1);
+});

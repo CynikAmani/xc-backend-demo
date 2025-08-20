@@ -1,17 +1,10 @@
-const db = require('../../config/db'); // Adjust the path based on your project structure
+const { db } = require('../../config/db');
 
-/**
- * Function to delete all brand images from the database
- * (Fire-and-forget implementation)
- */
 const deleteAllBrandImages = () => {
-  const query = `DELETE FROM brand_images`;
-
-  db.query(query, (err, results) => {
+  db.query(`DELETE FROM brand_images`, (err, result) => {
     if (err) {
-      console.error('Database delete error:', err);
-    } else {
-      console.log('All brand images deleted successfully. Affected rows:', results.affectedRows);
+      console.error('Error deleting brand images:', err);
+      return;
     }
   });
 };

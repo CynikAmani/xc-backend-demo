@@ -1,11 +1,13 @@
 const express = require('express');
-const db = require('../../../../config/db');
-const checkAdmin = require('../../../../auth/checkAdmin');
+const db = require('../../../config/db');
+const checkSession = require('../../../auth/checkSession');
 const router = express.Router();
 
-// GET feedbacks with category details, customer name, and replies
-router.get('/', checkAdmin, (req, res) => {
+
+// GET feedbacks for logged-in customer with category and replies
+router.get('/', checkSession, (req, res) => {
   const sessionUserId = req.session.userId;
+  if (!sessionUserId) return res.status(401).json({ message: 'Unauthorized' });
 
   const feedbackQuery = `
     SELECT 
@@ -14,21 +16,19 @@ router.get('/', checkAdmin, (req, res) => {
       f.created_at,
       f.is_seen,
       c.name AS category_name,
-      c.description AS category_description,
-      u.fullname AS customer_name
+      c.description AS category_description
     FROM feedbacks f
     JOIN feedback_categories c ON f.category_id = c.id
-    JOIN users u ON f.user_id = u.user_id
+    WHERE f.user_id = ?
     ORDER BY f.created_at DESC
   `;
 
-  db.query(feedbackQuery, (err, feedbacks) => {
+  db.query(feedbackQuery, [sessionUserId], (err, feedbacks) => {
     if (err) {
       console.error('Database error:', err);
       return res.status(500).json({ message: 'Internal server error.' });
     }
 
-    // Get all replies for the returned feedbacks
     const feedbackIds = feedbacks.map(fb => fb.feedback_id);
     if (feedbackIds.length === 0) return res.status(200).json([]);
 
@@ -45,7 +45,6 @@ router.get('/', checkAdmin, (req, res) => {
         return res.status(500).json({ message: 'Failed to fetch replies.' });
       }
 
-      // Group replies by feedback_id
       const replyMap = {};
       replies.forEach(r => {
         const replyObj = {
@@ -62,7 +61,6 @@ router.get('/', checkAdmin, (req, res) => {
         }
       });
 
-      // Attach replies to each feedback
       const feedbacksWithReplies = feedbacks.map(fb => ({
         ...fb,
         replies: replyMap[fb.feedback_id] || []

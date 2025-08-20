@@ -22,7 +22,8 @@ router.get('/', checkAdmin, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    const userType = userTypeResults[0].user_type;
+    
+    const userType = userTypeResults.user_type;
 
     // Proceed with other queries
     const totalActiveLoansQuery = `
@@ -198,24 +199,24 @@ router.get('/', checkAdmin, async (req, res) => {
     
 
     // Extract results from the query responses
-    const totalActiveLoans = totalActiveLoansResults[0].total_active_loans;
-    const totalCustomerBalance = totalCustomerBalanceResults[0].total_balance || 0;
-    const loanApplications = loanApplicationsResults[0].total_applications;
-    const totalUsers = totalUsersResults[0].total_users;
-    const numDelinquentLoans = numDelinquentLoansResults[0].num_delinquent_loans;
-    const totalInterest = totalInterestResults[0].total_interest || 0;
-    const monthlyCollectedInterest = monthlyCollectedInterestResults[0].monthly_collected_interest || 0;
-    const yearlyCollectedInterest = yearlyCollectedInterestResults[0].yearly_collected_interest || 0;
-    const numActiveLoans = numActiveLoansResults[0].num_active_loans;
-    const totalLoansIssued = totalLoansIssuedResults[0].total_loans_issued;
-    const totalAmountDisbursed = totalAmountDisbursedResults[0].total_amount_disbursed || 0;
-    const totalAmountDisbursedCurrentMonth = totalAmountDisbursedCurrentMonthResults[0].total_amount_disbursed_current_month || 0;
-    const yearlyDisbursedAmount = yearlyDisbursedAmountResults[0].yearly_disbursed_amount || 0;
-    const averageLoanAmount = averageLoanAmountResults[0].average_loan_amount || 0;
-    const totalRepaidAmount = totalRepaidAmountResults[0].total_repaid_amount || 0;
-    const mostActiveUser = mostActiveUserResults[0] || {};
-    const topBorrower = topBorrowerResults[0] || {};
-    const totalClearedLoans = totalClearedLoansResults[0].total_cleared_loans;
+    const totalActiveLoans = totalActiveLoansResults.total_active_loans;
+    const totalCustomerBalance = totalCustomerBalanceResults.total_balance || 0;
+    const loanApplications = loanApplicationsResults.total_applications;
+    const totalUsers = totalUsersResults.total_users;
+    const numDelinquentLoans = numDelinquentLoansResults.num_delinquent_loans;
+    const totalInterest = totalInterestResults.total_interest || 0;
+    const monthlyCollectedInterest = monthlyCollectedInterestResults.monthly_collected_interest || 0;
+    const yearlyCollectedInterest = yearlyCollectedInterestResults.yearly_collected_interest || 0;
+    const numActiveLoans = numActiveLoansResults.num_active_loans;
+    const totalLoansIssued = totalLoansIssuedResults.total_loans_issued;
+    const totalAmountDisbursed = totalAmountDisbursedResults.total_amount_disbursed || 0;
+    const totalAmountDisbursedCurrentMonth = totalAmountDisbursedCurrentMonthResults.total_amount_disbursed_current_month || 0;
+    const yearlyDisbursedAmount = yearlyDisbursedAmountResults.yearly_disbursed_amount || 0;
+    const averageLoanAmount = averageLoanAmountResults.average_loan_amount || 0;
+    const totalRepaidAmount = totalRepaidAmountResults.total_repaid_amount || 0;
+    const mostActiveUser = mostActiveUserResults || {};
+    const topBorrower = topBorrowerResults || {};
+    const totalClearedLoans = totalClearedLoansResults.total_cleared_loans;
 
     // Respond with the aggregated statistics and user type
     res.status(200).json({
