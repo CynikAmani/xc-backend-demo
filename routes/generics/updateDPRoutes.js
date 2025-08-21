@@ -4,12 +4,16 @@ const path = require('path');
 const db = require('../../config/db'); 
 const checkSession = require('../../auth/checkSession'); 
 
+// Get upload path from env (fallback to ./uploads for local dev)
+const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads'); 
+
+
 const router = express.Router();
 
 // Set up multer for file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Directory to save uploaded files
+    cb(null, uploadPath); // Directory to save uploaded files
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);

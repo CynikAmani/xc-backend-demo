@@ -5,10 +5,15 @@ const checkAdmin = require('../../../../auth/checkAdmin');
 const multer = require('multer');
 const path = require('path');
 
+
+// Get upload path from env (fallback to ./uploads for local dev)
+const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads'); 
+
+
 // Set up multer for logo image upload
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, './uploads/');
+        cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + path.extname(file.originalname)); // Append current timestamp to the original file name

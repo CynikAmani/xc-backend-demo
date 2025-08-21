@@ -6,8 +6,6 @@ const path = require('path');
 const session = require('express-session');
 const cron = require('node-cron'); //scheduler 
 
-const deleteAllBrandImages = require('./routes/generics/deleteBrandImagesRoutes.js');
-
 dotenv.config();
 
 const app = express();
@@ -19,15 +17,24 @@ const corsOptions = {
   };
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/var/data/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads');
+
+// Serve static files from the configured path
+app.use('/uploads', express.static(uploadPath));
+
 
 // Session setup
-// Session setup
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set secure: true in production with HTTPS
+  secret: process.env.SESSION_SECRET || 'fallback-secret',
+  resave: false,
+  saveUninitialized: false, // better for performance
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production', 
+    httpOnly: true, 
+    sameSite: 'strict' 
+  }
 }));
 
 
@@ -242,8 +249,6 @@ const PORT = process.env.PORT || 9999;
 // Wait for DB initialization before starting server
 dbInitialized.then(() => {
   require('./routes/admins/configurations/messeges/updateLoanStatusOnScheduleRoutes.js');  // Schedule loan reminders
-  deleteAllBrandImages(); // Delete all brand images on server start | this is due to render isssues with their disks when server restarts it loses data and so image names also need to be deleted
-  const PORT = process.env.PORT || 9999;
   app.listen(PORT, () => console.log(`Server now ready to serve, running on port ${PORT}`));
 }).catch(err => {
   console.error("Database initialization failed:", err);

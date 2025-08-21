@@ -145,7 +145,7 @@ const sendLoanReminders = async () => {
           await createNotification('alert', admin.user_id, content);
         }
 
-        // Update loan and block user
+        // Update loan status and block this user
         db.query(
           'UPDATE loans SET status = "overdue" WHERE loan_id = ? AND end_date < ?',
           [loan.loan_id, now.format('YYYY-MM-DD HH:mm:ss')],
