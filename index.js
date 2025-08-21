@@ -25,15 +25,14 @@ const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(uploadPath));
 
 
+
 // Session setup
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-secret',
+  secret: process.env.SESSION_SECRET || 'HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH',
   resave: false,
-  saveUninitialized: false, // better for performance
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production', 
-    httpOnly: true, 
-    sameSite: 'strict' 
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production' // Set secure: true in production with HTTPS
   }
 }));
 
