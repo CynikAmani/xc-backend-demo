@@ -12,7 +12,7 @@ const app = express();
 
 // Middleware
 const corsOptions = {
-    origin: ['https://www.xandercreditors.com', 'http://localhost:3000', 'https://xandercreditors-git-main-xander-creditors-projects.vercel.app/'],
+    origin: ['*'],
     credentials: true,
   };
 app.use(cors(corsOptions));
