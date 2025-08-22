@@ -12,17 +12,17 @@ const app = express();
 
 // Middleware
 const corsOptions = {
-    origin: ['https://www.xandercreditors.com', 'http://localhost:3000'],
+    origin: ['https://www.xandercreditors.com', 'http://localhost:3000', 'https://xandercreditors-git-main-xander-creditors-projects.vercel.app/'],
     credentials: true,
   };
 app.use(cors(corsOptions));
 app.use(express.json());
 
 
-const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads');
+  const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads');
 
-// Serve static files from the configured path
-app.use('/uploads', express.static(uploadPath));
+  // Serve static files from the configured path
+  app.use('/uploads', express.static(uploadPath));
 
 
 
