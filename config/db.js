@@ -58,7 +58,7 @@ async function initializeDatabase() {
       });
     }
 
-    console.log('Database tables created successfully.');
+    console.log('Database tables resolved successfully.');
     
     // After creating tables, check and insert initial data if necessary
     await insertInitialDataIfNeeded();
