@@ -6,7 +6,9 @@ async function createIndexesIfNeeded(db) {
     users: [
       "CREATE INDEX idx_users_email ON users(email)",
       "CREATE INDEX idx_users_phone ON users(phone)",
-      "CREATE INDEX idx_users_district ON users(district_id)"
+      "CREATE INDEX idx_users_district ON users(district_id)",
+      "CREATE INDEX idx_users_user_id ON users(user_id)",
+      "CREATE INDEX idx_users_user_type ON users(user_type)"
     ],
     messages: [
       "CREATE INDEX idx_messages_target ON messages(target_user)",
@@ -14,7 +16,8 @@ async function createIndexesIfNeeded(db) {
     ],
     notifications: [
       "CREATE INDEX idx_notifications_target ON notifications(target_user)",
-      "CREATE INDEX idx_notifications_is_viewed ON notifications(is_viewed)"
+      "CREATE INDEX idx_notifications_is_viewed ON notifications(is_viewed)",
+      "CREATE INDEX idx_notifications_notification_type ON notifications(notification_type)"
     ],
     loan_applications: [
       "CREATE INDEX idx_loan_applications_applicant ON loan_applications(applicant_id)",
