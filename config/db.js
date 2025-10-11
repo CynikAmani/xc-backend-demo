@@ -2,6 +2,7 @@ const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 const { createTablesQueries, insertInitialDataQueries } = require('./dbInitialQueries');
+const { createIndexesIfNeeded } = require('./tableIndexes'); 
 
 // Create a MySQL connection pool
 const db = mysql.createPool({
@@ -17,7 +18,6 @@ const db = mysql.createPool({
 
 // Create a promise that resolves when DB is fully initialized
 const dbInitialized = new Promise((resolve, reject) => {
-  // Test the connection pool
   db.getConnection((err, connection) => {
     if (err) {
       console.error('MySQL connection failed:', err.stack);
@@ -27,7 +27,6 @@ const dbInitialized = new Promise((resolve, reject) => {
     console.log('Connected to MySQL server.');
     connection.release();
 
-    // Initialize the database (create tables)
     initializeDatabase()
       .then(resolve)
       .catch(reject);
@@ -37,7 +36,6 @@ const dbInitialized = new Promise((resolve, reject) => {
 async function initializeDatabase() {
   try {
     console.log('Starting database table resolution...');
-    // Create tables sequentially to handle foreign key dependencies
     for (const query of createTablesQueries) {
       await new Promise((resolve, reject) => {
         db.query(query, (err) => {
@@ -45,12 +43,11 @@ async function initializeDatabase() {
             console.error(`Error executing query: ${query.substring(0, 100)}...`);
             reject(err);
           } else {
-            // Optional: Log successful creation of each table
             const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS `?(\w+)`?/i);
             if (tableNameMatch && tableNameMatch[1]) {
-                console.log(`Table '${tableNameMatch[1]}' resolved successfully.`);
+              console.log(`Table '${tableNameMatch[1]}' resolved successfully.`);
             } else {
-                console.log(`Query executed successfully: ${query.substring(0, 50)}...`);
+              console.log(`Query executed successfully: ${query.substring(0, 50)}...`);
             }
             resolve();
           }
@@ -59,14 +56,15 @@ async function initializeDatabase() {
     }
 
     console.log('Database tables resolved successfully.');
-    
-    // After creating tables, check and insert initial data if necessary
+
     await insertInitialDataIfNeeded();
+
     
+    await createIndexesIfNeeded(db);
+
     console.log('Database initialization complete');
   } catch (err) {
     console.error('Error initializing database:', err.stack);
-    // You might want to also explicitly reject the promise that initializeDatabase resolves
     throw err;
   }
 }
@@ -170,6 +168,7 @@ async function checkAndCreateRootAdmin() {
   });
 }
 
+// keep db.promise wrapper
 db.promise = () => {
   return {
     query: (sql, values) => {
@@ -183,8 +182,6 @@ db.promise = () => {
   };
 };
 
-
-
-module.exports = db;                  // Default export (backward compatible)
-module.exports.db = db;              // Named export
-module.exports.dbInitialized = dbInitialized; // Named export
+module.exports = db;                  
+module.exports.db = db;              
+module.exports.dbInitialized = dbInitialized;
