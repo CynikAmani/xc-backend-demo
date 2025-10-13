@@ -27,7 +27,8 @@ async function createIndexesIfNeeded(db) {
       "CREATE INDEX idx_loans_customer ON loans(customer_id)",
       "CREATE INDEX idx_loans_handler ON loans(handler_id)",
       "CREATE INDEX idx_loans_status ON loans(status)",
-      "CREATE INDEX idx_loans_end_date ON loans(end_date)"
+      "CREATE INDEX idx_loans_end_date ON loans(end_date)",
+      "CREATE INDEX idx_loans_is_cleared ON loans(is_cleared)"
     ],
     payments: [
       "CREATE INDEX idx_payments_loan ON payments(loan_id)",

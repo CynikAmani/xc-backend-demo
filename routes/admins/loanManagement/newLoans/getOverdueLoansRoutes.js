@@ -6,7 +6,9 @@ const moment = require('moment');
 
 // Route to get overdue loans
 router.get('/', checkAdmin, (req, res) => {
-  const query = `
+  const { limit = 20, lastId = null } = req.query;
+
+  let query = `
     SELECT
       l.loan_id AS loanId,
       l.customer_id AS customerId,
@@ -22,29 +24,36 @@ router.get('/', checkAdmin, (req, res) => {
       l.num_weeks AS numWeeks,
       u.fullname AS customerName,
       lt.type_name AS loanTypeName,
-      hu.fullname AS handlerName  -- Get the handler's name
+      hu.fullname AS handlerName
     FROM loans l
     JOIN users u ON l.customer_id = u.user_id
     JOIN loan_types lt ON l.loan_type_id = lt.loan_type_id
-    JOIN users hu ON l.handler_id = hu.user_id  -- Join to get the handler's name
-    WHERE l.is_cleared = false AND l.end_date < NOW()  -- Only get uncleared loans that are overdue
-    ORDER BY l.end_date
+    JOIN users hu ON l.handler_id = hu.user_id
+    WHERE l.is_cleared = false AND l.end_date < NOW()
   `;
 
-  db.query(query, (err, loanResults) => {
+  const params = [];
+
+  if (lastId) {
+    query += ` AND l.loan_id < ?`;
+    params.push(lastId);
+  }
+
+  query += ` ORDER BY l.end_date ASC LIMIT ?`;
+  params.push(parseInt(limit));
+
+  db.query(query, params, (err, loanResults) => {
     if (err) {
       console.error('Database query error:', err);
       return res.status(500).json({ message: 'Internal server error' });
     }
 
-    // Get loan IDs for balance calculation
     const loanIds = loanResults.map(loan => loan.loanId);
 
     if (loanIds.length === 0) {
-      return res.status(200).json([]); 
+      return res.status(200).json([]);
     }
 
-    // Query to fetch total repayments for each loan
     const repaymentQuery = `
       SELECT
         loan_id AS loanId,
@@ -60,32 +69,24 @@ router.get('/', checkAdmin, (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      // Map repayments to loanId for easy lookup
       const repaymentMap = repaymentResults.reduce((acc, repayment) => {
         acc[repayment.loanId] = repayment.totalRepayment;
         return acc;
       }, {});
 
-      // Calculate the balance and timeOverdueElapsed for each loan
       const formattedLoans = loanResults.map(loan => {
         const totalRepayment = repaymentMap[loan.loanId] || 0;
         const balance = loan.returnAmount - totalRepayment;
 
-        // Parse loan end date as moment object
         const endDate = moment(loan.endDate);
         const currentDate = moment();
-
-        // Calculate overdue time correctly
         const overdueDuration = moment.duration(currentDate.diff(endDate));
-        const daysOverdue = Math.floor(overdueDuration.asDays());
-        const hoursOverdue = Math.floor(overdueDuration.asHours()) % 24;
-        const minutesOverdue = Math.floor(overdueDuration.asMinutes()) % 60;
 
         return {
           loanId: loan.loanId,
           customerId: loan.customerId,
-          handlerName: loan.handlerName,  // Return handler's name
-          loanTypeName: loan.loanTypeName, // Return the actual loan type name
+          handlerName: loan.handlerName,
+          loanTypeName: loan.loanTypeName,
           loanAmount: loan.loanAmount,
           returnAmount: loan.returnAmount,
           interestRate: loan.interestRate,
@@ -96,12 +97,12 @@ router.get('/', checkAdmin, (req, res) => {
           isCleared: loan.isCleared,
           numWeeks: loan.numWeeks,
           customerName: loan.customerName,
-          balance: balance, 
-          amountPaid: totalRepayment, 
+          balance: balance,
+          amountPaid: totalRepayment,
           timeOverdueElapsed: {
-            days: daysOverdue,
-            hours: hoursOverdue,
-            minutes: minutesOverdue
+            days: Math.floor(overdueDuration.asDays()),
+            hours: Math.floor(overdueDuration.asHours()) % 24,
+            minutes: Math.floor(overdueDuration.asMinutes()) % 60
           }
         };
       });
