@@ -6,7 +6,7 @@ const moment = require('moment');
 
 // Route to get uncleared loans that have not gone beyond due date
 router.get('/', checkAdmin, (req, res) => {
-  const { limit = 20, lastId = null } = req.query;
+  const { customerName = '' } = req.query;
 
   let query = `
     SELECT
@@ -34,13 +34,13 @@ router.get('/', checkAdmin, (req, res) => {
 
   const params = [];
 
-  if (lastId) {
-    query += ` AND l.loan_id < ?`;
-    params.push(lastId);
+  // Add customer name filter if provided
+  if (customerName.trim() !== '') {
+    query += ` AND u.fullname LIKE ?`;
+    params.push(`%${customerName.trim()}%`);
   }
 
-  query += ` ORDER BY l.loan_id DESC LIMIT ?`;
-  params.push(parseInt(limit));
+  query += ` ORDER BY l.loan_id DESC`;
 
   db.query(query, params, (err, loanResults) => {
     if (err) {
