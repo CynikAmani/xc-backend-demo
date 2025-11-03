@@ -127,6 +127,8 @@ const getNumNewFeedbackRepliesRoutes = require('./routes/customers/feedbacks/get
 const markFeedbackRepliesAsReadRoutes = require('./routes/generics/feedbackReplies/markFeedbackRepliesAsReadRoutes.js');
 const getAdminNumNewFeedbackRepliesRoutes = require('./routes/admins/configurations/feedbacks/getAdminNumNewFeedbackRepliesRoutes.js');
 const markCustomerFeedbacksAndRepliesAsReadRoutes = require('./routes/admins/configurations/feedbacks/markCustomerFeedbacksAndRepliesAsReadRoutes.js');
+const getMonthlyProfitRoutes = require('./routes/admins/dashboard/getMonthlyProfitRoutes.js');
+
 
 
 
@@ -219,6 +221,8 @@ app.use('/api/getNumNewFeedbackReplies', getNumNewFeedbackRepliesRoutes);
 app.use('/api/markFeedbackRepliesAsRead', markFeedbackRepliesAsReadRoutes);
 app.use('/api/getAdminNumNewFeedbackReplies', getAdminNumNewFeedbackRepliesRoutes);
 app.use('/api/markCustomerFeedbacksAndRepliesAsRead', markCustomerFeedbacksAndRepliesAsReadRoutes);
+app.use('/api/getMonthlyProfits', getMonthlyProfitRoutes);
+
 
 
 
