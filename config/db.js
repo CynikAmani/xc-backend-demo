@@ -182,6 +182,6 @@ db.promise = () => {
   };
 };
 
-module.exports = db;                  
-module.exports.db = db;              
+module.exports = db;
+module.exports.db = db;
 module.exports.dbInitialized = dbInitialized;
