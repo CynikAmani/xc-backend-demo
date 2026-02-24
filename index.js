@@ -42,7 +42,8 @@ const sessionStore = new MySQLStore({
   database: process.env.DB_NAME,
   clearExpired: true,
   checkExpirationInterval: 900000,
-  expiration: 86400000
+  expiration: 86400000,
+  createDatabaseTable: true // Add this to ensure table exists
 });
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -58,10 +59,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     proxy: true,
+    rolling: true, // Add this to refresh cookie on each request
     cookie: {
       httpOnly: true,
       secure: isProduction,
-      sameSite: "none",
+      sameSite: isProduction ? "none" : "lax", // Change this - use lax for development
       domain: isProduction ? ".xandercreditors.com" : undefined,
       path: "/",
       maxAge: 1000 * 60 * 60 * 24
