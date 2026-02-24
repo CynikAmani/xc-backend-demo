@@ -10,6 +10,16 @@ dotenv.config();
 
 const app = express();
 
+// Add this BEFORE CORS
+app.use((req, res, next) => {
+  // If request comes from your frontend through the proxy
+  if (req.headers['x-forwarded-for'] || req.headers.referer?.includes('xandercreditors.com')) {
+    // Treat it as same-origin
+    req.headers.origin = undefined;
+  }
+  next();
+});
+
 // JUST USE THIS - EXACTLY WHAT WAS WORKING BEFORE
 app.use(cors());
 app.use(express.json());
@@ -21,6 +31,8 @@ app.use("/uploads", express.static(uploadPath));
 
 // USE SESSION FROM SESSIONSETUP.JS
 app.use(createSessionMiddleware());
+
+// Routes start here...
 
 
 // Routes
