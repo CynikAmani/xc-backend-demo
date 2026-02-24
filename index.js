@@ -12,10 +12,10 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-// CORS
+// -------------------- CORS --------------------
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN, // frontend: https://www.xandercreditors.com
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -25,11 +25,11 @@ app.use(
 
 app.use(express.json());
 
-// Uploads
+// -------------------- Uploads --------------------
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadPath));
 
-// MySQL session store
+// -------------------- MySQL Session Store --------------------
 const sessionStore = new MySQLStore({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT || 3306,
@@ -42,7 +42,7 @@ const sessionStore = new MySQLStore({
   createDatabaseTable: true
 });
 
-// Session middleware
+// -------------------- Session Middleware --------------------
 app.use(
   session({
     name: process.env.COOKIE_NAME,
@@ -54,26 +54,13 @@ app.use(
     rolling: true,
     cookie: {
       httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
-      secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: process.env.COOKIE_SAME_SITE,
-      domain: ".xandercreditors.com",
+      secure: true,                    // HTTPS only
+      sameSite: 'none',                // cross-site
+      domain: '.xandercreditors.com',  // matches frontend + backend subdomain
       maxAge: parseInt(process.env.COOKIE_MAX_AGE)
     }
   })
 );
-
-
-// Middleware to ensure session cookies have the correct domain
-app.use((req, res, next) => {
-  const originalSetHeader = res.setHeader;
-  res.setHeader = function(name, value) {
-    if (name.toLowerCase() === 'set-cookie' && value.includes('session_id')) {
-      value = value.replace(/domain=[^;]+;?/i, 'domain=.xandercreditors.com;');
-    }
-    return originalSetHeader.call(this, name, value);
-  };
-  next();
-});
 
 // Routes
 const test = require("./auth/test.js");
