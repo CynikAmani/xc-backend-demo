@@ -5,16 +5,16 @@ const dotenv = require("dotenv");
 const path = require("path");
 const session = require("express-session");
 const MySQLStore = require('express-mysql-session')(session);
-const cron = require("node-cron"); //scheduler
+const cron = require("node-cron");
 
 dotenv.config();
 
 const app = express();
 
-// Trust proxy - IMPORTANT for Render
+// Trust proxy - CRITICAL for Render
 app.set('trust proxy', 1);
 
-// CORS configuration - Match working example
+// CORS
 app.use(cors({
   origin: 'https://www.xandercreditors.com',
   credentials: true,
@@ -23,20 +23,12 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Handle preflight
-app.options('*', cors({
-  origin: 'https://www.xandercreditors.com',
-  credentials: true
-}));
-
 app.use(express.json());
 
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
-
-// Serve static files from the configured path
 app.use("/uploads", express.static(uploadPath));
 
-// MySQL session store setup
+// MySQL session store
 const sessionStore = new MySQLStore({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT || 3306,
@@ -44,26 +36,26 @@ const sessionStore = new MySQLStore({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   clearExpired: true,
-  checkExpirationInterval: 900000, // 15 minutes
-  expiration: 86400000 // 24 hours
+  checkExpirationInterval: 900000,
+  expiration: 86400000
 });
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Session setup - Adapted from working example
+// Session setup - EXACTLY like working app
 app.use(
   session({
-    name: 'session_id', // Custom name
+    name: 'session_id',
     secret: process.env.SESSION_SECRET || "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    proxy: true, // Important for Render
+    proxy: true, // CRITICAL for Render
     cookie: {
       httpOnly: true,
-      secure: isProduction, // true in production
-      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin in production
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      secure: isProduction, // true in production (HTTPS)
+      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin
+      maxAge: 1000 * 60 * 60 * 24,
       path: '/',
     }
   })
