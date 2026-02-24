@@ -3,24 +3,14 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
+const session = require("express-session");
 const cron = require("node-cron"); //scheduler
-const { createSessionMiddleware } = require('./config/sessionSetup.js');
 
 dotenv.config();
 
 const app = express();
 
-// Add this BEFORE CORS
-app.use((req, res, next) => {
-  // If request comes from your frontend through the proxy
-  if (req.headers['x-forwarded-for'] || req.headers.referer?.includes('xandercreditors.com')) {
-    // Treat it as same-origin
-    req.headers.origin = undefined;
-  }
-  next();
-});
-
-// JUST USE THIS - EXACTLY WHAT WAS WORKING BEFORE
+// Middleware - JUST THIS, no options
 app.use(cors());
 app.use(express.json());
 
@@ -29,11 +19,21 @@ const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 // Serve static files from the configured path
 app.use("/uploads", express.static(uploadPath));
 
-// USE SESSION FROM SESSIONSETUP.JS
-app.use(createSessionMiddleware());
+// Session setup
+app.use(
+  session({
+    secret:
+      process.env.SESSION_SECRET ||
+      "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: false,
+    },
+  })
+);
 
 // Routes start here...
-
 
 // Routes
 const test = require("./auth/test.js");
