@@ -18,20 +18,20 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://xandercreditors.com",
   "https://www.xandercreditors.com",
-  process.env.CORS_ORIGIN, // optional override
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow server-to-server / Postman
+      // Allow server-side or no-origin requests (Next rewrites)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      // Instead of throwing error, just deny quietly
+      return callback(null, false);
     },
     credentials: true,
   })
