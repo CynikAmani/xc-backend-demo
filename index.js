@@ -13,22 +13,16 @@ const app = express();
 // Trust proxy for Render / Vercel
 app.set("trust proxy", 1);
 
-// CORS - allow both root and www domains
+// CORS - using your actual CORS_ORIGIN
 app.use(
   cors({
-    origin: [
-      "https://www.xandercreditors.com",
-      "https://xandercreditors.com"
-    ],
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 200
   })
 );
-
-// Handle preflight requests
-app.options('*', cors());
 
 app.use(express.json());
 
@@ -49,27 +43,21 @@ const sessionStore = new MySQLStore({
   createDatabaseTable: true
 });
 
-const isProduction = process.env.NODE_ENV === "production";
-
-// Session middleware
+// Session middleware using your actual cookie env vars
 app.use(
   session({
-    name: "session_id",
-    secret:
-      process.env.SESSION_SECRET ||
-      "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
+    name: process.env.COOKIE_NAME || "session_id",
+    secret: process.env.SESSION_SECRET,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     proxy: true,
     rolling: true,
     cookie: {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      domain: isProduction ? ".xandercreditors.com" : undefined,
-      path: "/",
-      maxAge: 1000 * 60 * 60 * 24
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || "lax",
+      maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 86400000
     }
   })
 );
