@@ -10,25 +10,20 @@ dotenv.config();
 
 const app = express();
 
-// ========================
-// GLOBAL CORS (Simple + Stable)
-// ========================
+// Middleware
 const corsOptions = {
-  origin: "*", // allow all origins
+  origin: ["*"],
+  credentials: true,
 };
-
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ========================
-// STATIC UPLOADS (unchanged)
-// ========================
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
+
+// Serve static files from the configured path
 app.use("/uploads", express.static(uploadPath));
 
-// ========================
-// SESSION (unchanged)
-// ========================
+// Session setup
 app.use(
   session({
     secret:
@@ -41,6 +36,8 @@ app.use(
     },
   }),
 );
+
+
 
 // Routes
 const test = require("./auth/test.js");
