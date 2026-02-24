@@ -11,32 +11,23 @@ dotenv.config();
 const app = express();
 
 // ========================
-// GLOBAL CORS (AS BEFORE)
+// GLOBAL CORS (Simple + Stable)
 // ========================
 const corsOptions = {
-  origin: ["*"],
-  credentials: true,
+  origin: "*", // allow all origins
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
 
 // ========================
-// UPLOADS (ADD CORS ONLY HERE TOO)
+// STATIC UPLOADS (unchanged)
 // ========================
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
-
-app.use(
-  "/uploads",
-  cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-    credentials: true,
-  }),
-  express.static(uploadPath)
-);
+app.use("/uploads", express.static(uploadPath));
 
 // ========================
-// SESSION (UNCHANGED)
+// SESSION (unchanged)
 // ========================
 app.use(
   session({
