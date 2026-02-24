@@ -1,4 +1,3 @@
-// server.js
 const { db, dbInitialized } = require("./config/db.js");
 const express = require("express");
 const cors = require("cors");
@@ -6,7 +5,6 @@ const dotenv = require("dotenv");
 const path = require("path");
 const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
-const cron = require("node-cron");
 
 dotenv.config();
 
@@ -15,14 +13,14 @@ const app = express();
 // Trust proxy for Render / Vercel
 app.set("trust proxy", 1);
 
-// CORS - allow root and www domains
+// CORS - allow both root and www domains
 app.use(
   cors({
     origin: [
       "https://www.xandercreditors.com",
       "https://xandercreditors.com"
     ],
-    credentials: true, // must be true for cookies
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 200
@@ -49,7 +47,7 @@ const sessionStore = new MySQLStore({
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Session middleware - patched
+// Session middleware
 app.use(
   session({
     name: "session_id",
@@ -59,22 +57,17 @@ app.use(
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    proxy: true, // trust proxy
+    proxy: true,
     cookie: {
       httpOnly: true,
-      secure: isProduction, // only HTTPS
-      sameSite: "none", // cross-origin
-      domain: isProduction ? ".xandercreditors.com" : undefined, // www + root
+      secure: isProduction,
+      sameSite: "none",
+      domain: isProduction ? ".xandercreditors.com" : undefined,
       path: "/",
-      maxAge: 1000 * 60 * 60 * 24 // 1 day
+      maxAge: 1000 * 60 * 60 * 24
     }
   })
 );
-
-// Example test route
-app.get("/", (req, res) => {
-  res.send("Server is running...");
-});
 
 // Routes
 const test = require("./auth/test.js");
