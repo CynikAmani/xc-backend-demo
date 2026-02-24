@@ -42,7 +42,7 @@ const sessionStore = new MySQLStore({
   createDatabaseTable: true
 });
 
-// Session middleware - FIXED for production
+// Session middleware
 app.use(
   session({
     name: process.env.COOKIE_NAME || "session_id",
@@ -54,8 +54,9 @@ app.use(
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: true, // Changed to true for HTTPS
-      sameSite: "none", // Changed from 'strict' to 'none'
+      secure: true,
+      sameSite: "none",
+      domain: ".xandercreditors.com", // ADD THIS - the dot allows both www and root
       maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 86400000
     }
   })
