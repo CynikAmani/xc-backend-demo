@@ -10,53 +10,33 @@ dotenv.config();
 
 const app = express();
 
-// REQUIRED for Render / proxies
-app.set("trust proxy", 1);
-
-// ================= CORS SETUP =================
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://xandercreditors.com",
-  "https://www.xandercreditors.com",
-].filter(Boolean);
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow server-side or no-origin requests (Next rewrites)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Instead of throwing error, just deny quietly
-      return callback(null, false);
-    },
-    credentials: true,
-  })
-);
-
+// Middleware
+// NO global CORS change — all other API routes work as before
 app.use(express.json());
 
-// ================= STATIC FILES =================
-const uploadPath =
-  process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
+// Uploads path
+const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 
-app.use("/uploads", express.static(uploadPath));
+// Only enable CORS for uploads (images for jsPDF)
+app.use(
+  "/uploads",
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    credentials: true,
+  }),
+  express.static(uploadPath)
+);
 
-// ================= SESSION SETUP =================
+// Session setup (same as before)
 app.use(
   session({
     secret:
       process.env.SESSION_SECRET ||
       "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // must be true in prod (HTTPS)
-      sameSite:
-        process.env.NODE_ENV === "production" ? "none" : "lax", // required for cross-domain cookies
+      secure: false,
     },
   })
 );
