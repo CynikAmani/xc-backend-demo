@@ -10,33 +10,55 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-const corsOptions = {
-  origin: [
-    process.env.CORS_ORIGIN || "http://localhost:3000"
-  ],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// REQUIRED for Render / proxies
+app.set("trust proxy", 1);
+
+// ================= CORS SETUP =================
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://xandercreditors.com",
+  "https://www.xandercreditors.com",
+  process.env.CORS_ORIGIN, // optional override
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow server-to-server / Postman
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
+// ================= STATIC FILES =================
+const uploadPath =
+  process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 
-// Serve static files from the configured path
 app.use("/uploads", express.static(uploadPath));
 
-// Session setup
+// ================= SESSION SETUP =================
 app.use(
   session({
     secret:
       process.env.SESSION_SECRET ||
       "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV === "production", // must be true in prod (HTTPS)
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax", // required for cross-domain cookies
     },
-  }),
+  })
 );
 
 // Routes
