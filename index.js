@@ -42,7 +42,7 @@ const sessionStore = new MySQLStore({
   createDatabaseTable: true
 });
 
-// Session middleware
+// Session middleware - FIXED for production
 app.use(
   session({
     name: process.env.COOKIE_NAME || "session_id",
@@ -53,35 +53,9 @@ app.use(
     proxy: true,
     rolling: true,
     cookie: {
-      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
-      secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: process.env.COOKIE_SAME_SITE || "lax",
-      maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 86400000
-    }
-  })
-);
-
-// Add debug middleware
-app.use((req, res, next) => {
-  console.log('Session ID:', req.session.id);
-  console.log('Session:', req.session);
-  console.log('Cookies:', req.headers.cookie);
-  next();
-});
-// Session middleware using your actual cookie env vars
-app.use(
-  session({
-    name: process.env.COOKIE_NAME || "session_id",
-    secret: process.env.SESSION_SECRET,
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    proxy: true,
-    rolling: true,
-    cookie: {
-      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
-      secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: process.env.COOKIE_SAME_SITE || "lax",
+      httpOnly: true,
+      secure: true, // Changed to true for HTTPS
+      sameSite: "none", // Changed from 'strict' to 'none'
       maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 86400000
     }
   })
