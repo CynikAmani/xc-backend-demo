@@ -10,12 +10,12 @@ dotenv.config();
 
 const app = express();
 
-app.set("trust proxy", 1);
+app.set("trust proxy", 1); // for HTTPS behind proxy
 
 // -------------------- CORS --------------------
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN, // frontend: https://www.xandercreditors.com
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -43,9 +43,11 @@ const sessionStore = new MySQLStore({
 });
 
 // -------------------- Session Middleware --------------------
+const isProduction = process.env.NODE_ENV === "production";
+
 app.use(
   session({
-    name: process.env.COOKIE_NAME,
+    name: process.env.COOKIE_NAME || "session_id",
     secret: process.env.SESSION_SECRET,
     store: sessionStore,
     resave: false,
@@ -53,11 +55,12 @@ app.use(
     proxy: true,
     rolling: true,
     cookie: {
-      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
-      secure: true,
-      sameSite: 'none',
-      domain: '.xandercreditors.com',
-      maxAge: parseInt(process.env.COOKIE_MAX_AGE)
+      httpOnly: true,
+      secure: isProduction,        // HTTPS only
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 24 * 60 * 60 * 1000,
+      path: "/",
+      // domain removed → host-only, like Emmac
     }
   })
 );
