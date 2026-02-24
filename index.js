@@ -15,7 +15,7 @@ app.set("trust proxy", 1);
 // -------------------- CORS --------------------
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN, // frontend: https://www.xandercreditors.com
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -54,13 +54,23 @@ app.use(
     rolling: true,
     cookie: {
       httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
-      secure: true,                    // HTTPS only
-      sameSite: 'none',                // cross-site
-      domain: '.xandercreditors.com',  // matches frontend + backend subdomain
+      secure: true,
+      sameSite: 'none',
+      domain: '.xandercreditors.com',
       maxAge: parseInt(process.env.COOKIE_MAX_AGE)
     }
   })
 );
+
+// -------------------- Debug middleware --------------------
+app.use((req, res, next) => {
+  console.log("----- Incoming Request -----");
+  console.log("Path:", req.path);
+  console.log("Cookies:", req.headers.cookie);
+  console.log("Session:", req.session);
+  console.log("---------------------------");
+  next();
+});
 
 // Routes
 const test = require("./auth/test.js");
