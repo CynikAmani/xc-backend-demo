@@ -19,19 +19,19 @@ const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 // Serve static files from the configured path
 app.use("/uploads", express.static(uploadPath));
 
-// Session setup
-app.use(
-  session({
-    secret:
-      process.env.SESSION_SECRET ||
-      "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: false,
-    },
-  }),
-);
+// // Session setup
+// app.use(
+//   session({
+//     secret:
+//       process.env.SESSION_SECRET ||
+//       "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
+//     resave: false,
+//     saveUninitialized: true,
+//     cookie: {
+//       secure: false,
+//     },
+//   }),
+// );
 
 // Rest of your code continues...
 

@@ -11,7 +11,7 @@ export const createSessionMiddleware = () => {
     port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASS || '',
-    database: process.env.DB_NAME || 'emmac_system'
+    database: process.env.DB_NAME || 'xander_creditors',
   });
 
   return session({
