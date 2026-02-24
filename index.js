@@ -10,8 +10,19 @@ dotenv.config();
 
 const app = express();
 
-// Middleware - JUST THIS, no options
-app.use(cors());
+// CORS configuration - Updated to work with sessions
+const corsOptions = {
+  origin: 'https://www.xandercreditors.com', // Your frontend domain
+  credentials: true, // Crucial for sessions/cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
 app.use(express.json());
 
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
@@ -19,17 +30,19 @@ const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 // Serve static files from the configured path
 app.use("/uploads", express.static(uploadPath));
 
-// Session setup
+// Session setup - Updated for cross-origin
 app.use(
   session({
-    secret:
-      process.env.SESSION_SECRET ||
-      "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
+    secret: process.env.SESSION_SECRET || "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Changed to false for better security
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV === 'production', // true in production (HTTPS)
+      httpOnly: true,
+      sameSite: 'lax', // Important for cross-origin requests
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
     },
+    name: 'sessionId' // Custom name to avoid conflicts
   })
 );
 
