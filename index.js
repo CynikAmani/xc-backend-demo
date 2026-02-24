@@ -10,14 +10,22 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-// NO global CORS change — all other API routes work as before
+// ========================
+// GLOBAL CORS (AS BEFORE)
+// ========================
+const corsOptions = {
+  origin: ["*"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Uploads path
+// ========================
+// UPLOADS (ADD CORS ONLY HERE TOO)
+// ========================
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 
-// Only enable CORS for uploads (images for jsPDF)
 app.use(
   "/uploads",
   cors({
@@ -27,7 +35,9 @@ app.use(
   express.static(uploadPath)
 );
 
-// Session setup (same as before)
+// ========================
+// SESSION (UNCHANGED)
+// ========================
 app.use(
   session({
     secret:
@@ -38,7 +48,7 @@ app.use(
     cookie: {
       secure: false,
     },
-  })
+  }),
 );
 
 // Routes
