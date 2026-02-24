@@ -6,12 +6,9 @@ const router = express.Router();
 
 // Route to get agreement references
 router.post('/', checkSession, (req, res) => {
-  let { userId } = req.body; // Extract userId from the request body
 
-  if (!userId) {
-    // If userId is not provided in the body, get it from the session
-    userId = req.session.userId;
-  }
+  const userId = req.body.userId || req.session.userId;
+  console.log('Received request for agreement references with userId:', userId);
 
   // Ensure userId is available
   if (!userId) {
