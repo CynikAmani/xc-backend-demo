@@ -45,7 +45,7 @@ const sessionStore = new MySQLStore({
 // Session middleware
 app.use(
   session({
-    name: process.env.COOKIE_NAME || "session_id",
+    name: process.env.COOKIE_NAME,
     secret: process.env.SESSION_SECRET,
     store: sessionStore,
     resave: false,
@@ -53,14 +53,27 @@ app.use(
     proxy: true,
     rolling: true,
     cookie: {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      domain: ".xandercreditors.com", // ADD THIS - the dot allows both www and root
-      maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 86400000
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE,
+      domain: ".xandercreditors.com",
+      maxAge: parseInt(process.env.COOKIE_MAX_AGE)
     }
   })
 );
+
+
+// Middleware to ensure session cookies have the correct domain
+app.use((req, res, next) => {
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function(name, value) {
+    if (name.toLowerCase() === 'set-cookie' && value.includes('session_id')) {
+      value = value.replace(/domain=[^;]+;?/i, 'domain=.xandercreditors.com;');
+    }
+    return originalSetHeader.call(this, name, value);
+  };
+  next();
+});
 
 // Routes
 const test = require("./auth/test.js");
