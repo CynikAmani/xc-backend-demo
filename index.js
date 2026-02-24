@@ -4,24 +4,30 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
 const session = require("express-session");
+const MySQLStore = require('express-mysql-session')(session);
 const cron = require("node-cron"); //scheduler
 
 dotenv.config();
 
 const app = express();
 
-// CORS configuration - Updated to work with sessions
-const corsOptions = {
-  origin: 'https://www.xandercreditors.com', // Your frontend domain
-  credentials: true, // Crucial for sessions/cookies
+// Trust proxy - IMPORTANT for Render
+app.set('trust proxy', 1);
+
+// CORS configuration - Match working example
+app.use(cors({
+  origin: 'https://www.xandercreditors.com',
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-};
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+}));
 
-app.use(cors(corsOptions));
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
+// Handle preflight
+app.options('*', cors({
+  origin: 'https://www.xandercreditors.com',
+  credentials: true
+}));
 
 app.use(express.json());
 
@@ -30,23 +36,38 @@ const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 // Serve static files from the configured path
 app.use("/uploads", express.static(uploadPath));
 
-// Session setup - Updated for cross-origin
+// MySQL session store setup
+const sessionStore = new MySQLStore({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  clearExpired: true,
+  checkExpirationInterval: 900000, // 15 minutes
+  expiration: 86400000 // 24 hours
+});
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Session setup - Adapted from working example
 app.use(
   session({
+    name: 'session_id', // Custom name
     secret: process.env.SESSION_SECRET || "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
+    store: sessionStore,
     resave: false,
-    saveUninitialized: false, // Changed to false for better security
+    saveUninitialized: false,
+    proxy: true, // Important for Render
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // true in production (HTTPS)
       httpOnly: true,
-      sameSite: 'lax', // Important for cross-origin requests
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    },
-    name: 'sessionId' // Custom name to avoid conflicts
+      secure: isProduction, // true in production
+      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin in production
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      path: '/',
+    }
   })
 );
-
-// Routes start here...
 
 // Routes
 const test = require("./auth/test.js");
