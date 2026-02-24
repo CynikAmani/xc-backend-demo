@@ -10,13 +10,13 @@ dotenv.config();
 
 const app = express();
 
-app.set("trust proxy", 1); // for HTTPS behind proxy
+app.set("trust proxy", 1);
 
 // -------------------- CORS --------------------
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN, // frontend: https://www.xandercreditors.com
-    credentials: true,
+    origin: process.env.CORS_ORIGIN, // frontend domain
+    credentials: true,                // must be true for cross-site cookies
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 200
@@ -42,7 +42,7 @@ const sessionStore = new MySQLStore({
   createDatabaseTable: true
 });
 
-// -------------------- Session Middleware --------------------
+// -------------------- Session Middleware (UPDATED) --------------------
 const isProduction = process.env.NODE_ENV === "production";
 
 app.use(
@@ -56,20 +56,19 @@ app.use(
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: isProduction,        // HTTPS only
-      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,       // HTTPS only
+      sameSite: "none",           // allow cross-site
       maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 24 * 60 * 60 * 1000,
-      path: "/",
-      // domain removed → host-only, like Emmac
+      path: "/"                   // domain removed → host-only, fixes cross-site
     }
   })
 );
 
-// -------------------- Debug middleware --------------------
+// -------------------- Debug Middleware --------------------
 app.use((req, res, next) => {
   console.log("----- Incoming Request -----");
   console.log("Path:", req.path);
-  console.log("Cookies:", req.headers.cookie);
+  console.log("Cookies:", req.headers.cookie); // will show cookies sent by browser
   console.log("Session:", req.session);
   console.log("---------------------------");
   next();
