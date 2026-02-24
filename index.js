@@ -1,33 +1,37 @@
+// server.js
 const { db, dbInitialized } = require("./config/db.js");
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
 const session = require("express-session");
-const MySQLStore = require('express-mysql-session')(session);
+const MySQLStore = require("express-mysql-session")(session);
 const cron = require("node-cron");
 
 dotenv.config();
 
 const app = express();
 
-// Trust proxy - CRITICAL for Render
-app.set('trust proxy', 1);
+// Trust proxy for Render / Vercel
+app.set("trust proxy", 1);
 
-// CORS - allow both www and root domain
-app.use(cors({
-  origin: [
-    'https://www.xandercreditors.com',
-    'https://xandercreditors.com'
-  ],
-  credentials: true, // must be true for cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200
-}));
+// CORS - allow root and www domains
+app.use(
+  cors({
+    origin: [
+      "https://www.xandercreditors.com",
+      "https://xandercreditors.com"
+    ],
+    credentials: true, // must be true for cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200
+  })
+);
 
 app.use(express.json());
 
+// Uploads
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadPath));
 
@@ -43,27 +47,34 @@ const sessionStore = new MySQLStore({
   expiration: 86400000
 });
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === "production";
 
-// Session setup with cross-subdomain cookie
+// Session middleware - patched
 app.use(
   session({
-    name: 'session_id',
-    secret: process.env.SESSION_SECRET || "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
+    name: "session_id",
+    secret:
+      process.env.SESSION_SECRET ||
+      "HSHGHJHBAJD7999799DJSGD6565shvdhhsuYUHUWBQHGE#$#@^%%&*&(445SNH",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    proxy: true, // CRITICAL for Render
+    proxy: true, // trust proxy
     cookie: {
       httpOnly: true,
-      secure: isProduction, // HTTPS required in prod
-      sameSite: 'none', // always none for cross-origin
-      domain: isProduction ? '.xandercreditors.com' : undefined, // enable root + www
-      maxAge: 1000 * 60 * 60 * 24,
-      path: '/',
+      secure: isProduction, // only HTTPS
+      sameSite: "none", // cross-origin
+      domain: isProduction ? ".xandercreditors.com" : undefined, // www + root
+      path: "/",
+      maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
   })
 );
+
+// Example test route
+app.get("/", (req, res) => {
+  res.send("Server is running...");
+});
 
 // Routes
 const test = require("./auth/test.js");
