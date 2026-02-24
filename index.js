@@ -27,6 +27,9 @@ app.use(
   })
 );
 
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 
 // Uploads
@@ -43,7 +46,7 @@ const sessionStore = new MySQLStore({
   clearExpired: true,
   checkExpirationInterval: 900000,
   expiration: 86400000,
-  createDatabaseTable: true // Add this to ensure table exists
+  createDatabaseTable: true
 });
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -59,11 +62,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     proxy: true,
-    rolling: true, // Add this to refresh cookie on each request
+    rolling: true,
     cookie: {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax", // Change this - use lax for development
+      sameSite: isProduction ? "none" : "lax",
       domain: isProduction ? ".xandercreditors.com" : undefined,
       path: "/",
       maxAge: 1000 * 60 * 60 * 24
