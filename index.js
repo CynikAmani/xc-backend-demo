@@ -14,13 +14,13 @@ const app = express();
 // Trust proxy - CRITICAL for Render
 app.set('trust proxy', 1);
 
-// CORS
+// CORS - allow both www and root domain
 app.use(cors({
   origin: [
-  'https://www.xandercreditors.com',
-  'https://xandercreditors.com'
-],
-  credentials: true,
+    'https://www.xandercreditors.com',
+    'https://xandercreditors.com'
+  ],
+  credentials: true, // must be true for cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
@@ -45,7 +45,7 @@ const sessionStore = new MySQLStore({
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Session setup - EXACTLY like working app
+// Session setup with cross-subdomain cookie
 app.use(
   session({
     name: 'session_id',
@@ -56,8 +56,9 @@ app.use(
     proxy: true, // CRITICAL for Render
     cookie: {
       httpOnly: true,
-      secure: isProduction, // true in production (HTTPS)
-      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin
+      secure: isProduction, // HTTPS required in prod
+      sameSite: 'none', // always none for cross-origin
+      domain: isProduction ? '.xandercreditors.com' : undefined, // enable root + www
       maxAge: 1000 * 60 * 60 * 24,
       path: '/',
     }
