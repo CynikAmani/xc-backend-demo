@@ -16,7 +16,10 @@ app.set('trust proxy', 1);
 
 // CORS
 app.use(cors({
-  origin: 'https://www.xandercreditors.com',
+  origin: [
+  'https://www.xandercreditors.com',
+  'https://xandercreditors.com'
+],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
