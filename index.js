@@ -10,12 +10,8 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-const corsOptions = {
-  origin: ["*"],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// JUST USE THIS - EXACTLY WHAT WAS WORKING BEFORE
+app.use(cors());
 app.use(express.json());
 
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
@@ -36,6 +32,8 @@ app.use(
     },
   }),
 );
+
+// Rest of your code continues...
 
 
 
