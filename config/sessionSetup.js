@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const createSessionMiddleware = () => {
+const createSessionMiddleware = (options = {}) => { // accept options
   const MySQLStore = MySQLStoreFactory(session);
 
   const sessionStore = new MySQLStore({
@@ -27,7 +27,8 @@ const createSessionMiddleware = () => {
     cookie: {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      sameSite: isProduction ? 'none' : 'lax', // must be 'none' for cross-subdomain
+      domain: options.cookieDomain || undefined, // set from server.js
       maxAge: 1000 * 60 * 60 * 24,
       path: '/',
     }

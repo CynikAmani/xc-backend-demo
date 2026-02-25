@@ -1,13 +1,12 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const { db, dbInitialized } = require("./config/db.js");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const { createSessionMiddleware } = require("./config/sessionSetup.js");
-const dotenv = require("dotenv");
 const path = require("path");
-
-dotenv.config();
 
 const app = express();
 
@@ -21,7 +20,6 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-
 app.use(morgan('dev'));
 app.use(express.json()); 
 
@@ -34,17 +32,16 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Session middleware
-app.use(createSessionMiddleware());
+// Session middleware — updated for cross-subdomain
+app.use(createSessionMiddleware({
+  cookieDomain: '.xandercreditors.com' // leading dot allows subdomain sharing
+}));
 
 app.use(express.json());
 
 // -------------------- Uploads --------------------
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadPath));
-
-
-
 
 // -------------------- Debug Middleware --------------------
 app.use((req, res, next) => {
