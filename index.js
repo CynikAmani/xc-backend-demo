@@ -1,27 +1,41 @@
 const { db, dbInitialized } = require("./config/db.js");
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const { createSessionMiddleware } = require("./config/sessionSetup.js");
 const dotenv = require("dotenv");
 const path = require("path");
-const session = require("express-session");
-const MySQLStore = require("express-mysql-session")(session);
 
 dotenv.config();
 
 const app = express();
 
-app.set("trust proxy", 1);
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
-// -------------------- CORS --------------------
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN, // frontend domain
-    credentials: true,                // must be true for cross-site cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 200
-  })
-);
+// Helmet
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false
+}));
+
+
+app.use(morgan('dev'));
+app.use(express.json()); 
+
+// CORS
+app.use(cors({
+  origin: 'https://xandercreditors.com',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+}));
+
+// Session middleware
+app.use(createSessionMiddleware());
 
 app.use(express.json());
 
@@ -29,40 +43,8 @@ app.use(express.json());
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadPath));
 
-// -------------------- MySQL Session Store --------------------
-const sessionStore = new MySQLStore({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  clearExpired: true,
-  checkExpirationInterval: 900000,
-  expiration: 86400000,
-  createDatabaseTable: true
-});
 
-// -------------------- Session Middleware (UPDATED) --------------------
-const isProduction = process.env.NODE_ENV === "production";
 
-app.use(
-  session({
-    name: process.env.COOKIE_NAME || "session_id",
-    secret: process.env.SESSION_SECRET,
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    proxy: true,
-    rolling: true,
-    cookie: {
-      httpOnly: true,
-      secure: isProduction,       // HTTPS only
-      sameSite: "none",           // allow cross-site
-      maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 24 * 60 * 60 * 1000,
-      path: "/"                   // domain removed → host-only, fixes cross-site
-    }
-  })
-);
 
 // -------------------- Debug Middleware --------------------
 app.use((req, res, next) => {
