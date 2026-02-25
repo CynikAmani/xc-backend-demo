@@ -43,15 +43,6 @@ app.use(express.json());
 const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadPath));
 
-// -------------------- Debug Middleware --------------------
-app.use((req, res, next) => {
-  console.log("----- Incoming Request -----");
-  console.log("Path:", req.path);
-  console.log("Cookies:", req.headers.cookie); // will show cookies sent by browser
-  console.log("Session:", req.session);
-  console.log("---------------------------");
-  next();
-});
 
 // Routes
 const test = require("./auth/test.js");
