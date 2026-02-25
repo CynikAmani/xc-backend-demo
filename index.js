@@ -27,7 +27,7 @@ app.use(express.json());
 
 // CORS
 app.use(cors({
-  origin: 'https://xandercreditors.com',
+  origin: 'https://www.xandercreditors.com',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
