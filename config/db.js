@@ -16,53 +16,40 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-// Create a promise that resolves when DB is fully initialized
+// Promise that resolves when DB is fully initialized
 const dbInitialized = new Promise((resolve, reject) => {
-  db.getConnection((err, connection) => {
+  db.getConnection(async (err, connection) => {
     if (err) {
       console.error('MySQL connection failed:', err.stack);
-      reject(err);
-      return;
+      return reject(err);
     }
     console.log('Connected to MySQL server.');
     connection.release();
 
-    initializeDatabase()
-      .then(resolve)
-      .catch(reject);
+    try {
+      await initializeDatabase();
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
   });
 });
 
 async function initializeDatabase() {
   try {
-    console.log('Starting database table resolution...');
-    for (const query of createTablesQueries) {
-      await new Promise((resolve, reject) => {
-        db.query(query, (err) => {
-          if (err) {
-            console.error(`Error executing query: ${query.substring(0, 100)}...`);
-            reject(err);
-          } else {
-            const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS `?(\w+)`?/i);
-            if (tableNameMatch && tableNameMatch[1]) {
-              console.log(`Table '${tableNameMatch[1]}' resolved successfully.`);
-            } else {
-              console.log(`Query executed successfully: ${query.substring(0, 50)}...`);
-            }
-            resolve();
-          }
-        });
-      });
-    }
+    // Execute all table creation queries without per-table logs
+    await Promise.all(createTablesQueries.map(query => 
+      new Promise((res, rej) => db.query(query, err => err ? rej(err) : res()))
+    ));
 
-    console.log('Database tables resolved successfully.');
+    console.log('🔹 Tables checked/created successfully.');
 
+    // Insert initial data if needed
     await insertInitialDataIfNeeded();
 
-    
+    // Create indexes
     await createIndexesIfNeeded(db);
-
-    console.log('Database initialization complete');
+    console.log('Database initialization complete.');
   } catch (err) {
     console.error('Error initializing database:', err.stack);
     throw err;
@@ -77,38 +64,28 @@ async function insertInitialDataIfNeeded() {
     `;
 
     db.query(checkDataQuery, async (err, results) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+      if (err) return reject(err);
 
-      const gendersTableHasData = results[0].length > 0;
-      const messagesTableHasData = results[1].length > 0;
+      const [gendersResult, messagesResult] = results;
+      const needsInsertion = !gendersResult.length || !messagesResult.length;
 
-      if (!gendersTableHasData || !messagesTableHasData) {
-        console.log('Inserting initial data...');
-
-        try {
-          const insertDataPromises = insertInitialDataQueries.map(query => 
-            new Promise((resolve, reject) => {
-              db.query(query, (err) => {
-                if (err) reject(err);
-                else resolve();
-              });
-            })
+      if (needsInsertion) console.log('📥 Inserting initial data...');
+      try {
+        if (needsInsertion) {
+          await Promise.all(
+            insertInitialDataQueries.map(
+              query => new Promise((res, rej) => db.query(query, err => (err ? rej(err) : res())))
+            )
           );
-
-          await Promise.all(insertDataPromises);
           console.log('Initial data inserted successfully.');
-          await checkAndCreateRootAdmin();
-          resolve();
-        } catch (err) {
-          reject(err);
+        } else {
+          console.log('Initial data already exists, skipping insertion.');
         }
-      } else {
-        console.log('Initial data already exists, skipping insertion.');
+
         await checkAndCreateRootAdmin();
         resolve();
+      } catch (err) {
+        reject(err);
       }
     });
   });
@@ -116,71 +93,60 @@ async function insertInitialDataIfNeeded() {
 
 async function checkAndCreateRootAdmin() {
   return new Promise((resolve, reject) => {
-    const checkUserQuery = `SELECT * FROM users WHERE user_type = 'root_admin' LIMIT 1;`;
+    const checkQuery = `SELECT * FROM users WHERE user_type = 'root_admin' LIMIT 1;`;
 
-    db.query(checkUserQuery, async (err, results) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+    db.query(checkQuery, async (err, results) => {
+      if (err) return reject(err);
 
-      if (results.length === 0) {
-        console.log('No root_admin user found, creating default root_admin user.');
-
+      if (!results.length) {
+        console.log('👑 Creating default root_admin user...');
         try {
-          const userId = process.env.ROOT_ADMIN_ID;
-          const password = process.env.ROOT_ADMIN_PASSWORD;
-          const hashedPassword = await bcrypt.hash(password, 10);
-          const userType = 'root_admin';
-          const fullName = process.env.ROOT_ADMIN_FULLNAME;
-          const genderId = parseInt(process.env.ROOT_ADMIN_GENDER_ID, 10);
-          const nationalId = process.env.ROOT_ADMIN_NATIONAL_ID;
-          const phone = process.env.ROOT_ADMIN_PHONE;
-          const email = process.env.ROOT_ADMIN_EMAIL;
-          const isBlocked = false;
-          const dp = null;
-
-          const insertRootAdminQuery = `
+          const hashedPassword = await bcrypt.hash(process.env.ROOT_ADMIN_PASSWORD, 10);
+          const insertQuery = `
             INSERT INTO users (
               user_id, password, user_type, fullname, gender_id, national_id, phone, email, is_blocked, dp
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
-
-          await new Promise((resolve, reject) => {
-            db.query(insertRootAdminQuery, [
-              userId, hashedPassword, userType, fullName, genderId, nationalId, phone, email, isBlocked, dp
-            ], (err) => {
-              if (err) reject(err);
-              else resolve();
-            });
+          await new Promise((res, rej) => {
+            db.query(
+              insertQuery,
+              [
+                process.env.ROOT_ADMIN_ID,
+                hashedPassword,
+                'root_admin',
+                process.env.ROOT_ADMIN_FULLNAME,
+                parseInt(process.env.ROOT_ADMIN_GENDER_ID, 10),
+                process.env.ROOT_ADMIN_NATIONAL_ID,
+                process.env.ROOT_ADMIN_PHONE,
+                process.env.ROOT_ADMIN_EMAIL,
+                false,
+                null
+              ],
+              err => (err ? rej(err) : res())
+            );
           });
-
-          console.log('Default root_admin user created successfully.');
-          resolve();
+          console.log('Default root_admin created successfully.');
         } catch (err) {
-          reject(err);
+          return reject(err);
         }
       } else {
-        console.log('Root admin user already exists, skipping creation.');
-        resolve();
+        console.log('ℹRoot admin user already exists, creation skipped.');
       }
+
+      resolve();
     });
   });
 }
 
-// keep db.promise wrapper
-db.promise = () => {
-  return {
-    query: (sql, values) => {
-      return new Promise((resolve, reject) => {
-        db.query(sql, values, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
-    }
-  };
-};
+// Promise wrapper for async/await
+db.promise = () => ({
+  query: (sql, values) => new Promise((resolve, reject) => {
+    db.query(sql, values, (err, results) => {
+      if (err) return reject(err);
+      resolve(results);
+    });
+  })
+});
 
 module.exports = db;
 module.exports.db = db;
