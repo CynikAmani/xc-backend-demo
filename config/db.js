@@ -42,7 +42,7 @@ async function initializeDatabase() {
       new Promise((res, rej) => db.query(query, err => err ? rej(err) : res()))
     ));
 
-    console.log('🔹 Tables checked/created successfully.');
+    console.log('Tables resolved successfully.');
 
     // Insert initial data if needed
     await insertInitialDataIfNeeded();
@@ -130,7 +130,7 @@ async function checkAndCreateRootAdmin() {
           return reject(err);
         }
       } else {
-        console.log('ℹRoot admin user already exists, creation skipped.');
+        console.log('Root admin user already exists, creation skipped.');
       }
 
       resolve();

@@ -1,6 +1,6 @@
 // config/tableIndexes.js
 async function createIndexesIfNeeded(db) {
-  console.log('Checking and creating indexes if necessary...');
+  console.log('Resolving indexes...');
   
   const indexGroups = {
     users: [
