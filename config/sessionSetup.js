@@ -1,10 +1,9 @@
 const session = require('express-session');
 const MySQLStoreFactory = require('express-mysql-session');
 const dotenv = require('dotenv');
-
 dotenv.config();
 
-const createSessionMiddleware = (options = {}) => { // accept options
+const createSessionMiddleware = () => { 
   const MySQLStore = MySQLStoreFactory(session);
 
   const sessionStore = new MySQLStore({
@@ -27,8 +26,7 @@ const createSessionMiddleware = (options = {}) => { // accept options
     cookie: {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax', // must be 'none' for cross-subdomain
-      domain: options.cookieDomain || undefined, // set from server.js
+      sameSite: isProduction ? 'none' : 'lax', // must be 'none' for cross-subdomain cookies
       maxAge: 1000 * 60 * 60 * 24,
       path: '/',
     }
