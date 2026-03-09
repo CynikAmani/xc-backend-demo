@@ -15,7 +15,7 @@ const { dbInitialized } = require("./config/db");
 // -----------------------------------------------------------------------------
 
 // This module sets up scheduled loan status updates
-// require("./routes/admins/configurations/messeges/updateLoanStatusOnScheduleRoutes");
+require("./routes/admins/configurations/messeges/updateLoanStatusOnScheduleRoutes");
 
 // -----------------------------------------------------------------------------
 // Server Configuration
